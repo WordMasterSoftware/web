@@ -6,6 +6,9 @@ import toast from 'react-hot-toast';
 import {
   ArrowLeftIcon,
   ForwardIcon,
+  HomeIcon,
+  ArrowPathIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useStudyStore, useCollectionStore } from '@/stores';
 import { useDebounce } from '@/hooks';
@@ -16,6 +19,50 @@ import StudyCard from '@/components/study/StudyCard';
 import TTSPlayer from '@/components/study/TTSPlayer';
 import UnderscoreInput from '@/components/study/UnderscoreInput';
 import { validateSpelling } from '@/utils/validation';
+
+/**
+ * 简单的 CSS 礼花组件
+ */
+const Confetti = () => {
+  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {[...Array(50)].map((_, i) => {
+        const left = Math.random() * 100;
+        const animationDuration = 3 + Math.random() * 2;
+        const delay = Math.random() * 5;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        return (
+          <div
+            key={i}
+            className="absolute top-[-20px] w-3 h-3 opacity-80"
+            style={{
+              left: `${left}%`,
+              backgroundColor: color,
+              borderRadius: Math.random() > 0.5 ? '50%' : '0',
+              transform: `rotate(${Math.random() * 360}deg)`,
+              animation: `fall ${animationDuration}s linear ${delay}s infinite`,
+            }}
+          />
+        );
+      })}
+      <style>{`
+        @keyframes fall {
+          0% {
+            transform: translateY(-20px) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 /**
  * 新词背诵页面
@@ -35,6 +82,10 @@ const StudyNew = () => {
     submitAnswer,
     nextWord,
     isLoading,
+    // 统计数据
+    correctCount,
+    incorrectCount,
+    skipCount
   } = useStudyStore();
 
   const { fetchCollectionDetail, currentCollection } = useCollectionStore();
@@ -44,9 +95,9 @@ const StudyNew = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackState, setFeedbackState] = useState(null);               // 'correct' | 'incorrect' | null
   const [isCardFlippedToSkip, setIsCardFlippedToSkip] = useState(false);  // 是否通过翻转卡片标记为跳过
-  const [hasShownComplete, setHasShownComplete] = useState(false);        // 是否已显示完成提示
-  const [isInitialized, setIsInitialized] = useState(false);              // 会话初始化状态，防止旧状态导致的误判
 
+  const [isInitialized, setIsInitialized] = useState(false);              // 会话初始化状态
+  const [isCompleted, setIsCompleted] = useState(false);                  // 是否已完成所有学习
 
   // eslint-disable-next-line no-unused-vars
   const debouncedInput = useDebounce(userInput, 300);
@@ -62,7 +113,7 @@ const StudyNew = () => {
     }
 
     // 重置状态
-    setHasShownComplete(false);
+    setIsCompleted(false);
     setIsInitialized(false);
 
     const init = async () => {
@@ -80,7 +131,7 @@ const StudyNew = () => {
     return () => {
       // 组件卸载时不重置，保持状态
     };
-  }, [collectionId,fetchCollectionDetail, startStudySession, navigate]);
+  }, [collectionId, fetchCollectionDetail, startStudySession, navigate]);
 
   // 检查是否完成
   useEffect(() => {
@@ -93,15 +144,12 @@ const StudyNew = () => {
       currentIndex >= learningQueue.length &&
       currentIndex > 0 &&
       !isLoading &&
-      !hasShownComplete
+      !isCompleted
     ) {
-      setHasShownComplete(true); // 标记已显示，避免重复触发
-      toast.success('恭喜！本轮学习已完成！');
-      setTimeout(() => {
-        navigate(`/wordbook/${collectionId}`);
-      }, 2000);
+      setIsCompleted(true);
+      // 也可以在这里播放一个完成音效
     }
-  }, [currentIndex, learningQueue, isLoading, hasShownComplete, navigate, collectionId, isInitialized]);
+  }, [currentIndex, learningQueue, isLoading, isCompleted, isInitialized]);
 
   // 处理提交答案
   const handleSubmit = async () => {
@@ -124,9 +172,13 @@ const StudyNew = () => {
         setFeedbackState('incorrect');
         // 错误时自动翻转卡片显示正确答案
         setIsFlipped(true);
+        // 标记为跳过（因为看答案了）
+        setIsCardFlippedToSkip(true);
       }
 
       // 提交到后端
+      // 如果错误，这里其实只是记录一次错误尝试，不算真正提交通过
+      // 但为了逻辑统一，我们还是调用 submitAnswer，后端会记录 status
       const result = await submitAnswer(currentWord.item_id, userInput, false);
       console.log('后端验证结果:', result);
 
@@ -138,8 +190,13 @@ const StudyNew = () => {
         setTimeout(() => {
           handleNext();
         }, 1500);
+      } else {
+        // 回答错误
+        toast.error('回答错误，请查看正确答案');
+        // 不自动跳转，停留在当前页面，已自动翻转卡片
+        // 此时已标记 setIsCardFlippedToSkip(true)，用户只能点"跳过"或者继续尝试输入(虽然没意义了，因为已经看了答案)
+        // 实际上，如果已经错误翻牌了，应该引导用户点"跳过"进入下一个
       }
-      // 错误时不自动跳转，停留在当前单词，等待用户手动操作
 
     } catch (error) {
       console.error('Submit error:', error);
@@ -165,7 +222,7 @@ const StudyNew = () => {
 
     try {
       await submitAnswer(currentWord.item_id, '', true);
-      toast('已跳过');
+      // toast('已跳过');
       handleNext();
     } catch (error) {
       console.error('Skip error:', error);
@@ -181,8 +238,79 @@ const StudyNew = () => {
     }
   };
 
-  if (isLoading && !currentWord) {
+  if (isLoading && !currentWord && !isCompleted) {
     return <PageLoading />;
+  }
+
+  // 完成状态视图
+  if (isCompleted) {
+    // 修正统计：跳过数 = 总跳过数 - 错误数
+    // 逻辑：因为错误时也会标记为跳过(或最终点跳过)，导致 skipCount 增加
+    // 但用户想看到的可能是：纯粹没做而跳过的 vs 做了但错了的
+    // 这里简单处理：展示原始数据即可，或者按需求调整
+    // 根据需求： "跳过的单词数量需要减去错误的数量"
+    const adjustedSkipCount = Math.max(0, skipCount - incorrectCount);
+
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 relative">
+        <Confetti />
+
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white dark:bg-dark-surface rounded-2xl shadow-xl p-8 text-center relative z-10 border border-gray-100 dark:border-dark-border"
+        >
+          <div className="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <SparklesIcon className="w-12 h-12 text-yellow-600 dark:text-yellow-400" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            恭喜！本轮学习完成
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
+            你已经完成了所有新词的学习任务
+          </p>
+
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl">
+              <p className="text-sm text-green-600 dark:text-green-400 mb-1">正确</p>
+              <p className="text-2xl font-bold text-green-700 dark:text-green-300">{correctCount}</p>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl">
+              <p className="text-sm text-red-600 dark:text-red-400 mb-1">错误</p>
+              <p className="text-2xl font-bold text-red-700 dark:text-red-300">{incorrectCount}</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">跳过</p>
+              <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">{adjustedSkipCount}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col space-y-3">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => navigate(`/wordbook/${collectionId}`)}
+              className="w-full justify-center"
+            >
+              <HomeIcon className="w-5 h-5 mr-2" />
+              返回单词本
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => window.location.reload()}
+              className="w-full justify-center"
+            >
+              <ArrowPathIcon className="w-5 h-5 mr-2" />
+              再来一组
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
   }
 
   if (!currentWord) {
@@ -277,7 +405,7 @@ const StudyNew = () => {
             disabled={isSubmitting}
           >
             <ForwardIcon className="w-5 h-5 mr-2" />
-            跳过
+            {isCardFlippedToSkip ? '下一个' : '跳过'}
           </Button>
 
           {!isCardFlippedToSkip && (
@@ -294,15 +422,16 @@ const StudyNew = () => {
         </div>
 
         {isCardFlippedToSkip && (
-          <p className="text-center text-sm text-yellow-600 dark:text-yellow-400 mt-2">
-            ⚠️ 已查看答案，本单词将标记为跳过
+          <p className="text-center text-sm text-yellow-600 dark:text-yellow-400 mt-2 flex items-center justify-center">
+            <ForwardIcon className="w-4 h-4 mr-1" />
+            已查看答案，本单词将标记为跳过
           </p>
         )}
 
         {/* 提示：占满字符后按回车提交 */}
         {!isCardFlippedToSkip && userInput.length === currentWord?.word?.length && (
           <p className="text-center text-sm text-green-600 dark:text-green-400">
-            ✓ 按回车键提交答案
+            按回车键提交答案
           </p>
         )}
       </motion.div>
@@ -314,8 +443,9 @@ const StudyNew = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center"
         >
-          <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            🔄 这是一个待检验单词，请再次确认拼写
+          <p className="text-sm text-yellow-800 dark:text-yellow-300 flex items-center justify-center">
+            <ArrowPathIcon className="w-4 h-4 mr-2" />
+            这是一个待检验单词，请再次确认拼写
           </p>
         </motion.div>
       )}

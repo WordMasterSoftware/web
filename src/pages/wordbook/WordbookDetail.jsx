@@ -448,9 +448,6 @@ const WordbookDetail = () => {
           <p className="text-gray-600 dark:text-gray-400">
             确定要将单词 <span className="font-bold text-gray-900 dark:text-white">{itemToDelete?.word}</span> 从此单词本中移除吗？
           </p>
-          <p className="text-xs text-red-500">
-            * 仅从当前单词本移除，不会删除数据库中的单词记录。
-          </p>
           <div className="flex justify-end space-x-3">
             <Button
               variant="ghost"
