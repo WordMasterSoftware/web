@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { collectionsApi } from '@/api';
+import { collectionsApi, itemsApi } from '@/api';
 
 /**
  * 单词本状态管理
@@ -204,6 +204,31 @@ const useCollectionStore = create((set, get) => ({
     } catch (error) {
       set({
         error: error.message || '导入单词失败',
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * 删除单词 (从当前单词本移除)
+   * @param {string} itemId - 学习条目ID (注意：不是 wordId，是 item_id)
+   */
+  deleteWord: async (itemId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await itemsApi.delete(itemId);
+
+      // 从当前列表中移除
+      set({
+        words: get().words.filter((w) => w.item_id !== itemId), // 注意: 后端返回的数据里是 item_id
+        total: get().total - 1,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({
+        error: error.message || '删除单词失败',
         isLoading: false,
       });
       throw error;

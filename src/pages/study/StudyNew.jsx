@@ -165,7 +165,7 @@ const StudyNew = () => {
 
     try {
       await submitAnswer(currentWord.item_id, '', true);
-      toast('已跳过', { icon: '⏭️' });
+      toast('已跳过');
       handleNext();
     } catch (error) {
       console.error('Skip error:', error);

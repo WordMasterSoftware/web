@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -7,6 +8,7 @@ import {
   PlusIcon,
   PlayIcon,
   ArrowUpTrayIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import * as XLSX from 'xlsx';
 import { useCollectionStore } from '@/stores';
@@ -29,6 +31,7 @@ const WordbookDetail = () => {
     fetchCollectionDetail,
     fetchWords,
     importWords,
+    deleteWord,
     isLoading,
   } = useCollectionStore();
 
@@ -36,6 +39,10 @@ const WordbookDetail = () => {
   const [wordInput, setWordInput] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importTaskResult, setImportTaskResult] = useState(null);
+
+  // 删除确认弹窗
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Excel 文件上传
   const fileInputRef = useRef(null);
@@ -46,7 +53,7 @@ const WordbookDetail = () => {
       fetchCollectionDetail(id);
       fetchWords(id);
     }
-  }, [id]);
+  }, [id, fetchCollectionDetail, fetchWords]);
 
   // 处理 Excel 文件选择
   const handleFileChange = async (e) => {
@@ -129,14 +136,15 @@ const WordbookDetail = () => {
       // 改为异步提交，返回 task info
       const result = await importWords(id, cleanedWords);
 
+      // 导入提示
       setImportTaskResult(result);
-      // toast.success(`成功导入 ${result.imported} 个单词！`);
 
-      // 刷新单词列表 (此时可能还没完成，但可以先刷新一下)
+      // 刷新单词列表
       await fetchWords(id);
 
     } catch (error) {
       toast.error('导入提交失败，请重试');
+      console.log(error);
     } finally {
       setIsImporting(false);
     }
@@ -148,6 +156,23 @@ const WordbookDetail = () => {
     setIsImportModalOpen(false);
     setWordInput('');
     setFileName('');
+  };
+
+  // 处理删除单词
+  const handleDeleteWord = async () => {
+    if (!itemToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteWord(itemToDelete.item_id);
+      toast.success('单词删除成功');
+      setItemToDelete(null);
+    } catch (error) {
+      toast.error('删除失败，请重试');
+      console.log(error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (isLoading && !currentCollection) {
@@ -249,15 +274,18 @@ const WordbookDetail = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     学习次数
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
                 {words.map((item) => (
                   <motion.tr
-                    key={item.id || item.word}
+                    key={item.item_id || item.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors group"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -288,6 +316,15 @@ const WordbookDetail = () => {
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {item.study_count || 0} 次
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => setItemToDelete(item)}
+                        className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="从单词本中移除"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
                     </td>
                   </motion.tr>
                 ))}
@@ -332,9 +369,10 @@ const WordbookDetail = () => {
             className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors font-mono"
           />
 
-          <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-             <span>支持换行、逗号、空格分隔，自动去重</span>
-             {fileName && <span className="text-primary-600">已加载: {fileName}</span>}
+          <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
+             <p>• 支持文本直接粘贴：换行、逗号、空格分隔，自动去重</p>
+             <p>• 支持 Excel 导入：.xlsx/.xls 格式，自动读取第一个工作表的所有内容</p>
+             {fileName && <p className="text-primary-600 font-medium mt-1">📄 已加载: {fileName}</p>}
           </div>
 
           {wordInput && (
@@ -397,6 +435,38 @@ const WordbookDetail = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        title="移除单词"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600 dark:text-gray-400">
+            确定要将单词 <span className="font-bold text-gray-900 dark:text-white">{itemToDelete?.word}</span> 从此单词本中移除吗？
+          </p>
+          <p className="text-xs text-red-500">
+            * 仅从当前单词本移除，不会删除数据库中的单词记录。
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="ghost"
+              onClick={() => setItemToDelete(null)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteWord}
+              loading={isDeleting}
+            >
+              确认移除
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
