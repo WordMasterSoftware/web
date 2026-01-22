@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式 */
+@layer base {
+  body {
+    @apply bg-white dark:bg-dark-bg text-gray-900 dark:text-gray-100;
+    @apply font-sans antialiased;
+    @apply min-h-screen;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-dark-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-dark-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-dark-hover;
+  }
+}
+
+/* 自定义工具类 */
+@layer utilities {
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* 文本渐变 */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700;
+  }
+
+  /* 玻璃态效果 */
+  .glass {
+    @apply bg-white/80 dark:bg-dark-surface/80 backdrop-blur-lg;
+  }
+
+  /* 卡片阴影 */
+  .card-shadow {
+    @apply shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50;
+  }
+}
