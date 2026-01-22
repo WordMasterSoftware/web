@@ -57,7 +57,10 @@ export const collectionsApi = {
    * @returns {Promise} - { success, imported, duplicates, reused, llm_generated, total }
    */
   importWords: (collectionId, words) => {
-    return apiClient.post(`/api/collections/${collectionId}/import`, words);
+    return apiClient.post(`/api/collections/${collectionId}/import`, {
+      collection_id: collectionId,
+      words: words
+    });
   },
 
   /**
