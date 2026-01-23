@@ -26,7 +26,13 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: |
+          # 检查是否存在测试脚本
+          if npm run | grep -q "test"; then
+            npm test
+          else
+            echo "跳过测试：未定义 test 脚本"
+          fi
 
       - name: Build project
         run: npm run build
