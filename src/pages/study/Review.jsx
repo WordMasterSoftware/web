@@ -9,6 +9,7 @@ import {
   PlusIcon,
   CheckCircleIcon,
   XCircleIcon,
+  TrashIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import { collectionsApi } from '@/api/collections';
@@ -23,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
  * Generation View Component (The Split-Screen UI)
  */
 const GenerateView = ({ onBack, onSuccess }) => {
+  // ... (GenerateView implementation remains the same)
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState('');
   const [loading, setLoading] = useState(false);
@@ -211,6 +213,7 @@ const ExamList = ({ onGenerate }) => {
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState(null);
 
   const fetchExams = async () => {
     try {
@@ -228,6 +231,21 @@ const ExamList = ({ onGenerate }) => {
     fetchExams();
   }, []);
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      const res = await examApi.delete(deleteId);
+      if (res.success) {
+        toast.success('考试记录已删除');
+        setExams(prev => prev.filter(e => e.exam_id !== deleteId));
+      }
+    } catch (error) {
+      toast.error('删除失败');
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'completed':
@@ -236,6 +254,8 @@ const ExamList = ({ onGenerate }) => {
         return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold dark:bg-red-900/30 dark:text-red-400">失败</span>;
       case 'generated':
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold dark:bg-blue-900/30 dark:text-blue-400">待考试</span>;
+      case 'grading':
+        return <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold dark:bg-purple-900/30 dark:text-purple-400">阅卷中</span>;
       case 'pending':
         return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold dark:bg-yellow-900/30 dark:text-yellow-400">生成中</span>;
       default:
@@ -301,9 +321,23 @@ const ExamList = ({ onGenerate }) => {
                 <span>{exam.translation_sentences_count} 例句</span>
               </div>
 
+              {/* Delete Button (Visible on hover or always on touch devices) */}
+              {exam.exam_status === 'completed' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    setDeleteId(exam.exam_id);
+                  }}
+                  className="absolute top-2 right-2 p-2 rounded-full bg-white dark:bg-dark-surface shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 z-10"
+                  title="删除考试记录"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              )}
+
               {/* Hover Effect overlay for interactive cards */}
               {exam.exam_status === 'generated' && (
-                <div className="absolute inset-0 bg-primary-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute inset-0 bg-primary-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                   <span className="text-white font-bold text-lg flex items-center">
                     开始考试 <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
                   </span>
@@ -313,6 +347,30 @@ const ExamList = ({ onGenerate }) => {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="确认删除"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600 dark:text-gray-300">
+            确定要删除这份考试记录吗？此操作不可恢复。
+            <br />
+            <span className="text-xs text-gray-500">(注意：这不会影响您的单词学习进度)</span>
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="ghost" onClick={() => setDeleteId(null)}>
+              取消
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
+              确认删除
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 };

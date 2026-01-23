@@ -42,5 +42,14 @@ export const examApi = {
    */
   submit: (data) => {
     return apiClient.post('/api/exam/submit', data);
+  },
+
+  /**
+   * 删除考试
+   * @param {string} examId
+   * @returns {Promise}
+   */
+  delete: (examId) => {
+    return apiClient.delete(`/api/exam/${examId}`);
   }
 };
