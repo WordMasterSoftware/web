@@ -21,6 +21,7 @@ import WordbookList from '@/pages/wordbook/WordbookList';
 import WordbookDetail from '@/pages/wordbook/WordbookDetail';
 import StudyNew from '@/pages/study/StudyNew';
 import Review from '@/pages/study/Review';
+import Exam from '@/pages/exam/Exam';
 import MessageCenter from '@/pages/messages/MessageCenter';
 
 function App() {
@@ -82,6 +83,7 @@ function App() {
             <Route path="/study/new" element={<StudyNew />} />
             <Route path="/messages" element={<MessageCenter />} />
             <Route path="/study/review" element={<Review />} />
+            <Route path="/exam/:examId" element={<Exam />} />
             <Route path="/study/random" element={<div>随机复习（开发中）</div>} />
             <Route path="/study/final" element={<div>完全复习（开发中）</div>} />
             <Route path="/statistics" element={<div>学习统计（开发中）</div>} />

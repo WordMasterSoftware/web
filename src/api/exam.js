@@ -13,7 +13,7 @@ export const examApi = {
   generate: (collectionId, data) => {
     return apiClient.post('/api/exam/generate', {
       collection_id: collectionId,
-      data
+      ...data
     });
   },
 
