@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   ArrowLeftIcon,
@@ -11,6 +10,7 @@ import {
 import { examApi } from '@/api/exam';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import Modal from '@/components/common/Modal';
 import { PageLoading } from '@/components/common/Loading';
 
 const Exam = () => {
@@ -19,6 +19,7 @@ const Exam = () => {
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
   // Form State
   const [spellingAnswers, setSpellingAnswers] = useState({}); // { word_id: user_input }
@@ -85,8 +86,6 @@ const Exam = () => {
       newSpellingValidation[q.word_id] = isCorrect;
 
       if (!isCorrect) {
-        // Use item_id if available (per requirement), fallback to word_id if backend didn't send item_id yet
-        // Ideally backend now sends item_id.
         wrongWords.push(q.item_id || q.word_id);
       }
     });
@@ -124,8 +123,7 @@ const Exam = () => {
       });
 
       if (res.success) {
-        toast.success('考试已提交！请查看站内信了解结果');
-        navigate('/study/review');
+        setIsResultModalOpen(true);
       } else {
         toast.error(res.message || '提交失败');
       }
@@ -208,7 +206,6 @@ const Exam = () => {
                   <CheckCircleIcon className="w-5 h-5 text-green-500 absolute right-3 top-1/2 -translate-y-1/2" />
                 )}
               </div>
-              {/* Show correct answer if validated and wrong? Requirement says "Send wrong ID to backend", doesn't explicitly say show answer, but usually good UX. */}
             </Card>
           ))}
         </div>
@@ -251,6 +248,47 @@ const Exam = () => {
           提交试卷
         </Button>
       </div>
+
+      {/* Submission Result Modal */}
+      <Modal
+        isOpen={isResultModalOpen}
+        onClose={() => navigate('/study/review')}
+        title="试卷已提交"
+        size="md"
+      >
+        <div className="space-y-6 text-center py-4">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircleIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              提交成功！
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 px-4">
+              系统正在通过 AI 批改您的翻译题目并生成评估报告。
+              处理完成后，您将在 <Link to="/messages" className="text-primary-600 hover:underline font-medium">消息中心</Link> 收到详细的结果反馈。
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col space-y-3">
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => navigate('/study/review')}
+            >
+              返回复习列表
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => navigate('/messages')}
+            >
+              前往消息中心
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
