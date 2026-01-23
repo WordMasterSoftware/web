@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, Fragment, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -14,6 +14,7 @@ import Modal from '@/components/common/Modal';
 import Card from '@/components/common/Card';
 import { PageLoading } from '@/components/common/Loading';
 import { WORDBOOK_COLORS, WORDBOOK_ICONS } from '@/utils/constants';
+import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 // 创建单词本表单验证
 const schema = z.object({
@@ -25,13 +26,19 @@ const schema = z.object({
  * 单词本列表页面
  */
 const WordbookList = () => {
-  const { collections, fetchCollections, createCollection, deleteCollection, isLoading } =
+  const { collections, total, fetchCollections, createCollection, deleteCollection, isLoading } =
     useCollectionStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(WORDBOOK_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(WORDBOOK_ICONS[0]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [collectionToDelete, setCollectionToDelete] = useState(null);
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadRef, isIntersecting] = useIntersectionObserver({ threshold: 0.1 });
+  const hasMore = collections.length < total;
 
   const {
     register,
@@ -42,9 +49,31 @@ const WordbookList = () => {
     resolver: zodResolver(schema),
   });
 
+  // Initial Fetch
   useEffect(() => {
-    fetchCollections();
+    fetchCollections(1, 20, false);
+    setPage(1);
   }, []);
+
+  // Infinite Scroll Trigger
+  useEffect(() => {
+    if (isIntersecting && hasMore && !loadingMore && !isLoading) {
+      loadMore();
+    }
+  }, [isIntersecting, hasMore, loadingMore, isLoading]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      await fetchCollections(nextPage, 20, true);
+      setPage(nextPage);
+    } catch (error) {
+      // toast.error('加载更多失败');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const onCreateSubmit = async (data) => {
     try {
@@ -111,7 +140,7 @@ const WordbookList = () => {
       </div>
 
       {/* Collections Grid */}
-      {collections.length === 0 ? (
+      {collections.length === 0 && !isLoading ? (
         <Card>
           <div className="text-center py-16">
             <BookOpenIcon className="w-20 h-20 text-gray-400 mx-auto mb-4" />
@@ -128,91 +157,104 @@ const WordbookList = () => {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {collections.map((collection, index) => (
-            <motion.div
-              key={collection.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.3 }}
-            >
-              <Link to={`/wordbook/${collection.id}`}>
-                <Card hoverable className="relative">
-                  {/* 右上角菜单 */}
-                  <div className="absolute top-4 right-4 z-10">
-                    <Menu as="div" className="relative">
-                      <Menu.Button
-                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <EllipsisVerticalIcon className="w-5 h-5 text-gray-500" />
-                      </Menu.Button>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {collections.map((collection, index) => (
+              <motion.div
+                key={collection.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+              >
+                <Link to={`/wordbook/${collection.id}`}>
+                  <Card hoverable className="relative">
+                    {/* 右上角菜单 */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <Menu as="div" className="relative">
+                        <Menu.Button
+                          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-hover transition-colors"
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <EllipsisVerticalIcon className="w-5 h-5 text-gray-500" />
+                        </Menu.Button>
 
-                      <Transition
-                        as={Fragment}
-                        enter="transition ease-out duration-100"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                      >
-                        <Menu.Items className="absolute right-0 mt-2 w-48 rounded-lg bg-white dark:bg-dark-surface shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                          <div className="py-1">
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  onClick={(e) => handleDeleteClick(e, collection)}
-                                  className={`${
-                                    active ? 'bg-error-50 dark:bg-error-900/20' : ''
-                                  } group flex w-full items-center px-4 py-2 text-sm text-error-600 dark:text-error-400`}
-                                >
-                                  <TrashIcon className="w-4 h-4 mr-3" />
-                                  删除单词本
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </div>
-                        </Menu.Items>
-                      </Transition>
-                    </Menu>
-                  </div>
-
-                  {/* 原有卡片内容 */}
-                  <div className="flex items-start space-x-4 mb-4">
-                    <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
-                      style={{ backgroundColor: collection.color || '#3b82f6' }}
-                    >
-                      {collection.icon || '📚'}
+                        <Transition
+                          as={Fragment}
+                          enter="transition ease-out duration-100"
+                          enterFrom="transform opacity-0 scale-95"
+                          enterTo="transform opacity-100 scale-100"
+                          leave="transition ease-in duration-75"
+                          leaveFrom="transform opacity-100 scale-100"
+                          leaveTo="transform opacity-0 scale-95"
+                        >
+                          <Menu.Items className="absolute right-0 mt-2 w-48 rounded-lg bg-white dark:bg-dark-surface shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div className="py-1">
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={(e) => handleDeleteClick(e, collection)}
+                                    className={`${
+                                      active ? 'bg-error-50 dark:bg-error-900/20' : ''
+                                    } group flex w-full items-center px-4 py-2 text-sm text-error-600 dark:text-error-400`}
+                                  >
+                                    <TrashIcon className="w-4 h-4 mr-3" />
+                                    删除单词本
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </div>
+                          </Menu.Items>
+                        </Transition>
+                      </Menu>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                        {collection.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {collection.word_count || 0} 个单词
+
+                    {/* 原有卡片内容 */}
+                    <div className="flex items-start space-x-4 mb-4">
+                      <div
+                        className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
+                        style={{ backgroundColor: collection.color || '#3b82f6' }}
+                      >
+                        {collection.icon || '📚'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                          {collection.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {collection.word_count || 0} 个单词
+                        </p>
+                      </div>
+                    </div>
+
+                    {collection.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
+                        {collection.description}
                       </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>
+                        创建于{' '}
+                        {new Date(collection.created_at).toLocaleDateString()}
+                      </span>
                     </div>
-                  </div>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
 
-                  {collection.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
-                      {collection.description}
-                    </p>
-                  )}
+          {/* Loading Indicator / Sentinel */}
+          {hasMore && (
+            <div ref={loadRef} className="py-8 flex justify-center">
+              <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+            </div>
+          )}
 
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>
-                      创建于{' '}
-                      {new Date(collection.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+          {!hasMore && collections.length > 0 && (
+             <p className="text-center text-gray-400 text-sm py-8">没有更多单词本了</p>
+          )}
+        </>
       )}
 
       {/* Create Modal */}

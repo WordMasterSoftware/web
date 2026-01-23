@@ -18,6 +18,7 @@ import Card from '@/components/common/Card';
 import { PageLoading } from '@/components/common/Loading';
 import { WORD_STATUS_LABELS, WORD_STATUS_COLORS } from '@/utils/constants';
 import { cleanWordList } from '@/utils/validation';
+import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 /**
  * 单词本详情页面
@@ -35,6 +36,12 @@ const WordbookDetail = () => {
     isLoading,
   } = useCollectionStore();
 
+  // Infinite Scroll State
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadRef, isIntersecting] = useIntersectionObserver({ threshold: 0.1 });
+  const hasMore = words.length < total;
+
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [wordInput, setWordInput] = useState('');
   const [isImporting, setIsImporting] = useState(false);
@@ -48,12 +55,34 @@ const WordbookDetail = () => {
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState('');
 
+  // Initial Fetch
   useEffect(() => {
     if (id) {
       fetchCollectionDetail(id);
-      fetchWords(id);
+      fetchWords(id, 1, 20, false);
+      setPage(1);
     }
   }, [id, fetchCollectionDetail, fetchWords]);
+
+  // Infinite Scroll Trigger
+  useEffect(() => {
+    if (isIntersecting && hasMore && !loadingMore && !isLoading) {
+      loadMore();
+    }
+  }, [isIntersecting, hasMore, loadingMore, isLoading]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      await fetchWords(id, nextPage, 20, true);
+      setPage(nextPage);
+    } catch (error) {
+      // toast.error('加载更多失败');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // 处理 Excel 文件选择
   const handleFileChange = async (e) => {
@@ -255,82 +284,95 @@ const WordbookDetail = () => {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-dark-hover">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    单词
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    中文
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    音标
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    学习次数
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                {words.map((item) => (
-                  <motion.tr
-                    key={item.item_id || item.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors group"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {item.word}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {item.content?.chinese || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {item.content?.phonetic || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          WORD_STATUS_COLORS[item.status] ||
-                          'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {WORD_STATUS_LABELS[item.status] || '未知'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {item.study_count || 0} 次
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => setItemToDelete(item)}
-                        className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="从单词本中移除"
-                      >
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-dark-hover">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      单词
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      中文
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      音标
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      状态
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      学习次数
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
+                  {words.map((item) => (
+                    <motion.tr
+                      key={item.item_id || item.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors group"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item.word}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {item.content?.chinese || '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {item.content?.phonetic || '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            WORD_STATUS_COLORS[item.status] ||
+                            'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {WORD_STATUS_LABELS[item.status] || '未知'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {item.study_count || 0} 次
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <button
+                          onClick={() => setItemToDelete(item)}
+                          className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="从单词本中移除"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Loading Indicator / Sentinel */}
+            {hasMore && (
+              <div ref={loadRef} className="py-8 flex justify-center border-t border-gray-100 dark:border-dark-border">
+                <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+              </div>
+            )}
+
+            {!hasMore && words.length > 0 && (
+               <p className="text-center text-gray-400 text-sm py-4 border-t border-gray-100 dark:border-dark-border">没有更多单词了</p>
+            )}
+          </>
         )}
       </Card>
 

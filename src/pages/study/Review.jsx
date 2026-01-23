@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -19,6 +19,7 @@ import Card from '@/components/common/Card';
 import Modal from '@/components/common/Modal';
 import { PageLoading } from '@/components/common/Loading';
 import { useNavigate } from 'react-router-dom';
+import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 /**
  * Generation View Component (The Split-Screen UI)
@@ -215,21 +216,55 @@ const ExamList = ({ onGenerate }) => {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState(null);
 
-  const fetchExams = async () => {
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadRef, isIntersecting] = useIntersectionObserver({ threshold: 0.1 });
+
+  const hasMore = exams.length < total;
+
+  const fetchExams = async (pageNum, append = false) => {
     try {
-      setLoading(true);
-      const res = await examApi.getList({ page: 1, size: 20 });
-      setExams(res.exams || []);
+      if (!append) setLoading(true);
+
+      // Use mode='immediate' to filter for review page as requested
+      const res = await examApi.getList({ page: pageNum, size: 20, mode: 'immediate' });
+
+      if (append) {
+        setExams(prev => [...prev, ...(res.exams || [])]);
+      } else {
+        setExams(res.exams || []);
+      }
+
+      setTotal(res.pagination?.total || 0);
     } catch (error) {
       toast.error('获取考试记录失败');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  // Initial load
   useEffect(() => {
-    fetchExams();
+    fetchExams(1);
+    setPage(1);
   }, []);
+
+  // Infinite Scroll Trigger
+  useEffect(() => {
+    if (isIntersecting && hasMore && !loadingMore && !loading) {
+      loadMore();
+    }
+  }, [isIntersecting, hasMore, loadingMore, loading]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    await fetchExams(nextPage, true);
+    setPage(nextPage);
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -238,6 +273,7 @@ const ExamList = ({ onGenerate }) => {
       if (res.success) {
         toast.success('考试记录已删除');
         setExams(prev => prev.filter(e => e.exam_id !== deleteId));
+        setTotal(prev => prev - 1);
       }
     } catch (error) {
       toast.error('删除失败');
@@ -263,7 +299,7 @@ const ExamList = ({ onGenerate }) => {
     }
   };
 
-  if (loading) return <PageLoading />;
+  if (loading && exams.length === 0) return <PageLoading />;
 
   return (
     <motion.div
@@ -291,63 +327,76 @@ const ExamList = ({ onGenerate }) => {
           <Button onClick={onGenerate}>开始第一次复习</Button>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {exams.map((exam) => (
-              <Card
-                key={exam.exam_id}
-                hoverable
-                className={`relative overflow-hidden group ${
-                  exam.exam_status === 'generated' ? 'cursor-pointer' : 'cursor-default'
-                }`}
-                onClick={() => {
-                  if (exam.exam_status === 'generated') {
-                    navigate(`/exam/${exam.exam_id}`);
-                  }
-                }}
-              >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                    <ClockIcon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">{exam.collection_name || '未知单词本'}</h3>
-                    <p className="text-xs text-gray-500">{new Date(exam.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-                {getStatusBadge(exam.exam_status)}
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 border-t pt-4 border-gray-100 dark:border-dark-border">
-                <span>{exam.total_words} 单词</span>
-                <span>{exam.translation_sentences_count} 例句</span>
-              </div>
-
-              {/* Delete Button (Visible on hover or always on touch devices) */}
-              {exam.exam_status === 'completed' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click
-                    setDeleteId(exam.exam_id);
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {exams.map((exam) => (
+                <Card
+                  key={exam.exam_id}
+                  hoverable
+                  className={`relative overflow-hidden group ${
+                    exam.exam_status === 'generated' ? 'cursor-pointer' : 'cursor-default'
+                  }`}
+                  onClick={() => {
+                    if (exam.exam_status === 'generated') {
+                      navigate(`/exam/${exam.exam_id}`);
+                    }
                   }}
-                  className="absolute top-2 right-2 p-2 rounded-full bg-white dark:bg-dark-surface shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 z-10"
-                  title="删除考试记录"
                 >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Hover Effect overlay for interactive cards */}
-              {exam.exam_status === 'generated' && (
-                <div className="absolute inset-0 bg-primary-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  <span className="text-white font-bold text-lg flex items-center">
-                    开始考试 <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
-                  </span>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                      <ClockIcon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{exam.collection_name || '未知单词本'}</h3>
+                      <p className="text-xs text-gray-500">{new Date(exam.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {getStatusBadge(exam.exam_status)}
                 </div>
-              )}
-            </Card>
-          ))}
-        </div>
+
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 border-t pt-4 border-gray-100 dark:border-dark-border">
+                  <span>{exam.total_words} 单词</span>
+                  <span>{exam.translation_sentences_count} 例句</span>
+                </div>
+
+                {/* Delete Button (Visible on hover or always on touch devices) */}
+                {exam.exam_status === 'completed' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      setDeleteId(exam.exam_id);
+                    }}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white dark:bg-dark-surface shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 z-10"
+                    title="删除考试记录"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Hover Effect overlay for interactive cards */}
+                {exam.exam_status === 'generated' && (
+                  <div className="absolute inset-0 bg-primary-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    <span className="text-white font-bold text-lg flex items-center">
+                      开始考试 <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
+                    </span>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+
+          {/* Loading Indicator / Sentinel */}
+          {hasMore && (
+            <div ref={loadRef} className="py-8 flex justify-center">
+              <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {!hasMore && exams.length > 0 && (
+             <p className="text-center text-gray-400 text-sm py-8">没有更多记录了</p>
+          )}
+        </>
       )}
 
       {/* Delete Confirmation Modal */}

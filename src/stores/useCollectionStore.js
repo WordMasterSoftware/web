@@ -22,20 +22,27 @@ const useCollectionStore = create((set, get) => ({
    * 获取单词本列表
    * @param {number} page - 页码
    * @param {number} pageSize - 每页数量
+   * @param {boolean} append - 是否追加数据
    */
-  fetchCollections: async (page = 1, pageSize = 20) => {
-    set({ isLoading: true, error: null });
+  fetchCollections: async (page = 1, pageSize = 20, append = false) => {
+    if (!append) {
+      set({ isLoading: true, error: null });
+    }
 
     try {
       const response = await collectionsApi.getList({ page, page_size: pageSize });
 
-      set({
-        collections: response.collections || [],
+      const newCollections = response.collections || [];
+
+      set((state) => ({
+        collections: append ? [...state.collections, ...newCollections] : newCollections,
         total: response.total || 0,
         page: response.page || 1,
         pageSize: response.page_size || 20,
         isLoading: false,
-      });
+      }));
+
+      return response; // Return response for UI to check if more data exists
     } catch (error) {
       set({
         error: error.message || '获取单词本列表失败',
@@ -73,9 +80,12 @@ const useCollectionStore = create((set, get) => ({
    * @param {string} collectionId - 单词本ID
    * @param {number} page - 页码
    * @param {number} pageSize - 每页数量
+   * @param {boolean} append - 是否追加数据
    */
-  fetchWords: async (collectionId, page = 1, pageSize = 20) => {
-    set({ isLoading: true, error: null });
+  fetchWords: async (collectionId, page = 1, pageSize = 20, append = false) => {
+    if (!append) {
+      set({ isLoading: true, error: null });
+    }
 
     try {
       const response = await collectionsApi.getWords(collectionId, {
@@ -83,13 +93,17 @@ const useCollectionStore = create((set, get) => ({
         page_size: pageSize,
       });
 
-      set({
-        words: response.words || [],
+      const newWords = response.words || [];
+
+      set((state) => ({
+        words: append ? [...state.words, ...newWords] : newWords,
         total: response.total || 0,
         page: response.page || 1,
         pageSize: response.page_size || 20,
         isLoading: false,
-      });
+      }));
+
+      return response;
     } catch (error) {
       set({
         error: error.message || '获取单词列表失败',
