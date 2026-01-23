@@ -20,6 +20,7 @@ import Settings from '@/pages/user/Settings';
 import WordbookList from '@/pages/wordbook/WordbookList';
 import WordbookDetail from '@/pages/wordbook/WordbookDetail';
 import StudyNew from '@/pages/study/StudyNew';
+import Review from '@/pages/study/Review';
 import MessageCenter from '@/pages/messages/MessageCenter';
 
 function App() {
@@ -28,7 +29,7 @@ function App() {
   // 初始化主题
   useEffect(() => {
     initTheme();
-  }, []);
+  }, [initTheme]);
 
   return (
     <BrowserRouter>
@@ -80,7 +81,7 @@ function App() {
             <Route path="/wordbook/:id" element={<WordbookDetail />} />
             <Route path="/study/new" element={<StudyNew />} />
             <Route path="/messages" element={<MessageCenter />} />
-            <Route path="/study/review" element={<div>即时复习（开发中）</div>} />
+            <Route path="/study/review" element={<Review />} />
             <Route path="/study/random" element={<div>随机复习（开发中）</div>} />
             <Route path="/study/final" element={<div>完全复习（开发中）</div>} />
             <Route path="/statistics" element={<div>学习统计（开发中）</div>} />

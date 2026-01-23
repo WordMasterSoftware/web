@@ -8,28 +8,39 @@ export const examApi = {
    * 生成考试
    * @param {string} collectionId - 单词本ID
    * @param {Object} data - { mode, count }
-   * @returns {Promise} - { exam_id, collection_id, title, total_questions, sections }
+   * @returns {Promise}
    */
   generate: (collectionId, data) => {
-    return apiClient.post('/api/exam/generate', data, {
-      params: {
-        collection_id: collectionId,
-      },
+    return apiClient.post('/api/exam/generate', {
+      collection_id: collectionId,
+      data
     });
   },
 
   /**
-   * 提交考试
-   * @param {string} examId - 考试ID
-   * @param {Object} spellingAnswers - 拼写题答案 { question_id: answer }
-   * @param {Object} translationAnswers - 翻译题答案 { question_id: answer }
-   * @returns {Promise} - { exam_id, score, total_questions, correct_answers, incorrect_answers, details }
+   * 获取考试列表
+   * @param {Object} params - { page, size }
+   * @returns {Promise}
    */
-  submit: (examId, spellingAnswers, translationAnswers) => {
-    return apiClient.post('/api/exam/submit', {
-      exam_id: examId,
-      spelling_answers: spellingAnswers,
-      translation_answers: translationAnswers,
-    });
+  getList: (params = {}) => {
+    return apiClient.get('/api/exam/info', { params });
   },
+
+  /**
+   * 获取考试详情
+   * @param {string} examId
+   * @returns {Promise}
+   */
+  getDetail: (examId) => {
+    return apiClient.get('/api/exam/detail', { params: { exam_id: examId } });
+  },
+
+  /**
+   * 提交考试
+   * @param {Object} data - { exam_id, user_id, collection_id, wrong_words, sentences }
+   * @returns {Promise}
+   */
+  submit: (data) => {
+    return apiClient.post('/api/exam/submit', data);
+  }
 };
