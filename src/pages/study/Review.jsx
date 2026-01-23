@@ -293,16 +293,18 @@ const ExamList = ({ onGenerate }) => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => (
-            <Card
-              key={exam.exam_id}
-              hoverable
-              className="relative overflow-hidden cursor-pointer group"
-              onClick={() => {
-                if (exam.exam_status === 'generated' || exam.exam_status === 'completed') {
-                  navigate(`/exam/${exam.exam_id}`);
-                }
-              }}
-            >
+              <Card
+                key={exam.exam_id}
+                hoverable
+                className={`relative overflow-hidden group ${
+                  exam.exam_status === 'generated' ? 'cursor-pointer' : 'cursor-default'
+                }`}
+                onClick={() => {
+                  if (exam.exam_status === 'generated') {
+                    navigate(`/exam/${exam.exam_id}`);
+                  }
+                }}
+              >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
