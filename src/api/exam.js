@@ -51,5 +51,17 @@ export const examApi = {
    */
   delete: (examId) => {
     return apiClient.delete(`/api/exam/${examId}`);
+  },
+
+  /**
+   * 获取可用单词数量
+   * @param {string} collectionId - 单词本ID
+   * @param {string} mode - 考试模式：immediate/random/complete
+   * @returns {Promise}
+   */
+  getAvailableWords: (collectionId, mode) => {
+    return apiClient.get('/api/exam/available-words', {
+      params: { collection_id: collectionId, mode }
+    });
   }
 };

@@ -154,7 +154,7 @@ const Exam = () => {
               {exam.collection_name} - 复习测试
             </h1>
             <p className="text-sm text-gray-500">
-              共 {exam.total_words} 题 · 预计用时 {exam.estimated_duration_minutes} 分钟
+              {exam.spelling_section?.length || 0} 个单词 · {exam.translation_section?.length || 0} 个例句 · 预计用时 {exam.estimated_duration_minutes} 分钟
             </p>
           </div>
         </div>

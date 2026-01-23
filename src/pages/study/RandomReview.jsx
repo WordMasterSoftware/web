@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   BookOpenIcon,
-  ClockIcon,
+  BeakerIcon,
   PlusIcon,
   CheckCircleIcon,
   TrashIcon,
@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 /**
- * Generation View Component (Immediate Review Specific)
+ * Generation View Component (Random Review Specific)
  */
 const GenerateView = ({ onBack, onSuccess }) => {
   const [collections, setCollections] = useState([]);
@@ -56,7 +56,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
 
       try {
         setCheckingAvailability(true);
-        const res = await examApi.getAvailableWords(selectedCollection, 'immediate');
+        const res = await examApi.getAvailableWords(selectedCollection, 'random');
         setAvailableWords(res.available_count || 0);
         // 自动调整单词数量不超过可用数量
         if (wordCount > res.available_count) {
@@ -91,12 +91,12 @@ const GenerateView = ({ onBack, onSuccess }) => {
     try {
       setGenerating(true);
       const res = await examApi.generate(selectedCollection, {
-        mode: 'immediate',
+        mode: 'random',
         count: wordCount
       });
 
       if (res.success) {
-        toast.success(res.message || '即时复习生成成功');
+        toast.success(res.message || '随机复习生成成功');
         onSuccess();
       } else {
         toast.error(res.message || '生成失败');
@@ -116,44 +116,43 @@ const GenerateView = ({ onBack, onSuccess }) => {
       exit={{ opacity: 0, x: -20 }}
       className="max-w-5xl w-full mx-auto bg-white dark:bg-dark-surface rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[600px] border border-gray-100 dark:border-dark-border"
     >
-      {/* Left: Visual Area (Blue Theme) */}
-      <div className="md:w-1/2 bg-blue-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
+      {/* Left: Visual Area (Purple Theme) */}
+      <div className="md:w-1/2 bg-purple-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
         <div className="relative z-10">
           <button
             onClick={onBack}
-            className="flex items-center text-blue-100 hover:text-white mb-8 transition-colors"
+            className="flex items-center text-purple-100 hover:text-white mb-8 transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5 mr-2" />
             返回列表
           </button>
 
-          <div className="w-16 h-16 bg-blue-500/50 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
-            <ClockIcon className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-purple-500/50 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
+            <BeakerIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-6">即时复习</h1>
-          <p className="text-blue-100 text-lg leading-relaxed mb-8">
-            系统将为您挑选最近学习且状态为"复习中"的单词。
-            通过拼写和翻译测试，巩固记忆，将单词推向下一个记忆阶段。
+          <h1 className="text-4xl font-bold mb-6">随机复习</h1>
+          <p className="text-purple-100 text-lg leading-relaxed mb-8">
+            系统将从"复习中"的单词库中随机抽取单词。打破记忆惯性，通过随机测试检测您对单词的真实掌握程度。
           </p>
 
           <div className="space-y-4">
-            <div className="flex items-center text-blue-100">
-              <CheckCircleIcon className="w-5 h-5 mr-3 text-blue-300" />
+            <div className="flex items-center text-purple-100">
+              <CheckCircleIcon className="w-5 h-5 mr-3 text-purple-300" />
               <span>精准筛选 Status 2 单词</span>
             </div>
-            <div className="flex items-center text-blue-100">
-              <CheckCircleIcon className="w-5 h-5 mr-3 text-blue-300" />
-              <span>智能生成翻译例句</span>
+            <div className="flex items-center text-purple-100">
+              <CheckCircleIcon className="w-5 h-5 mr-3 text-purple-300" />
+              <span>随机打乱抽取</span>
             </div>
-            <div className="flex items-center text-blue-100">
-              <CheckCircleIcon className="w-5 h-5 mr-3 text-blue-300" />
+            <div className="flex items-center text-purple-100">
+              <CheckCircleIcon className="w-5 h-5 mr-3 text-purple-300" />
               <span>自动评判与状态流转</span>
             </div>
           </div>
         </div>
 
         {/* Background Decorations */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-500 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-purple-500 rounded-full opacity-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 bg-indigo-500 rounded-full opacity-20 blur-3xl"></div>
       </div>
 
@@ -162,10 +161,10 @@ const GenerateView = ({ onBack, onSuccess }) => {
         <div className="max-w-md mx-auto w-full space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              开始复习会话
+              开始随机测试
             </h2>
             <p className="text-gray-500 dark:text-gray-400">
-              请选择一个单词本，系统将为您生成复习试卷
+              请选择一个单词本，系统将随机抽取单词
             </p>
           </div>
 
@@ -182,7 +181,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
                   <select
                     value={selectedCollection}
                     onChange={(e) => setSelectedCollection(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white appearance-none"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all dark:text-white appearance-none"
                   >
                     {collections.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -212,7 +211,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
                 max={availableWords}
                 value={wordCount}
                 onChange={(e) => setWordCount(Math.max(10, Math.min(availableWords, parseInt(e.target.value) || 10)))}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all dark:text-white"
                 disabled={checkingAvailability || availableWords === 0}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -227,11 +226,11 @@ const GenerateView = ({ onBack, onSuccess }) => {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    即时模式规则
+                    随机模式规则
                   </h3>
                   <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>优先选择最近学习的单词</li>
+                      <li>不按时间排序，完全随机抽取</li>
                       <li>可自定义单词数量（10-{availableWords || '...'} 个）</li>
                       <li>需要单词本中至少有 10 个待复习单词</li>
                     </ul>
@@ -251,7 +250,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
               </Button>
               <Button
                 size="lg"
-                className="flex-1 justify-center py-4 text-lg bg-blue-600 hover:bg-blue-700 text-white border-transparent focus:ring-blue-500"
+                className="flex-1 justify-center py-4 text-lg bg-purple-600 hover:bg-purple-700 text-white border-transparent focus:ring-purple-500"
                 onClick={handleGenerate}
                 loading={generating}
                 disabled={loading || collections.length === 0 || checkingAvailability || availableWords < 10}
@@ -267,7 +266,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
 };
 
 /**
- * List View Component (Immediate Exam History)
+ * List View Component (Random Exam History)
  */
 const ExamList = ({ onGenerate }) => {
   const navigate = useNavigate();
@@ -287,8 +286,8 @@ const ExamList = ({ onGenerate }) => {
     try {
       if (!append) setLoading(true);
 
-      // mode='immediate'
-      const res = await examApi.getList({ page: pageNum, size: 20, mode: 'immediate' });
+      // mode='random'
+      const res = await examApi.getList({ page: pageNum, size: 20, mode: 'random' });
 
       if (append) {
         setExams(prev => [...prev, ...(res.exams || [])]);
@@ -367,23 +366,23 @@ const ExamList = ({ onGenerate }) => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">即时复习</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">随机复习</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            复习最近学习的单词，巩固记忆曲线
+            随机抽取单词进行测试，打破记忆顺序
           </p>
         </div>
         <Button onClick={onGenerate}>
           <PlusIcon className="w-5 h-5 mr-2" />
-          生成即时复习
+          生成随机复习
         </Button>
       </div>
 
       {exams.length === 0 ? (
         <Card className="text-center py-12">
-          <ClockIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">暂无即时复习记录</h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-2 mb-6">您还没有生成过任何即时复习试卷</p>
-          <Button onClick={onGenerate}>开始第一次复习</Button>
+          <BeakerIcon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">暂无随机复习记录</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-2 mb-6">您还没有生成过任何随机复习试卷</p>
+          <Button onClick={onGenerate}>开始第一次随机复习</Button>
         </Card>
       ) : (
         <>
@@ -403,8 +402,8 @@ const ExamList = ({ onGenerate }) => {
                 >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <ClockIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <BeakerIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 dark:text-white">{exam.collection_name || '未知单词本'}</h3>
@@ -435,9 +434,9 @@ const ExamList = ({ onGenerate }) => {
 
                 {/* Hover Effect */}
                 {exam.exam_status === 'generated' && (
-                  <div className="absolute inset-0 bg-blue-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  <div className="absolute inset-0 bg-purple-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                     <span className="text-white font-bold text-lg flex items-center">
-                      开始考试 <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
+                      开始随机测试 <ArrowLeftIcon className="w-5 h-5 ml-2 rotate-180" />
                     </span>
                   </div>
                 )}
@@ -447,7 +446,7 @@ const ExamList = ({ onGenerate }) => {
 
           {hasMore && (
             <div ref={loadRef} className="py-8 flex justify-center">
-              <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             </div>
           )}
 
@@ -484,7 +483,7 @@ const ExamList = ({ onGenerate }) => {
   );
 };
 
-const Review = () => {
+const RandomReview = () => {
   const [view, setView] = useState('list');
 
   return (
@@ -502,4 +501,4 @@ const Review = () => {
   );
 };
 
-export default Review;
+export default RandomReview;
