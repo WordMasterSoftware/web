@@ -9,7 +9,10 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '@/components/common/Button';
 import { useConfigStore } from '@/stores';
-
+import TextPressure from '@/components/reactbits/TextPressure';
+import ColorBends from '@/components/reactbits/ColorBends';
+import SpotlightCard from '@/components/reactbits/SpotlightCard';
+import SplitText from '@/components/reactbits/SplitText';
 /**
  * 首页 - 系统介绍
  */
@@ -40,131 +43,205 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-purple-50 dark:from-dark-bg dark:via-dark-surface dark:to-dark-bg">
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            <span className="text-gradient">WordMaster</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8">
-            AI驱动的智能背单词系统
-          </p>
-          <p className="text-lg text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
-            通过大模型技术提供智能化的单词学习、复习和评测功能。
-            <br />
-            科学的记忆曲线，让背单词更高效。
-          </p>
+    <div className="bg-black min-h-screen">
+      {/* 1. Full Screen Hero Section with ColorBends Background */}
+      <div className="relative h-screen w-full overflow-hidden flex flex-col justify-center items-center">
+        {/* Background Effect - Only for this section */}
+        <div className="absolute inset-0 z-0 opacity-60">
+          <ColorBends
+            colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+            rotation={-6}
+            speed={0.2}
+            scale={1}
+            frequency={1}
+            warpStrength={1}
+            mouseInfluence={1}
+            parallax={0.5}
+            noise={0.1}
+            transparent
+            autoRotate={0}
+            color=""
+          />
+        </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to={isConfigured ? '/user/register' : '/url-config'}>
-              <Button size="lg" variant="primary">
-                {isConfigured ? '注册' : '开始使用'}
-              </Button>
-            </Link>
-            <Link to="/user/login">
-              <Button size="lg" variant="outline">
-                已有账号？登录
-              </Button>
-            </Link>
+        {/* Hero Content */}
+        <div className="relative z-10 w-full max-w-4xl px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div style={{ position: 'relative', height: '200px' }} className="mb-8">
+              <TextPressure
+                text="Word Master"
+                flex={true}
+                alpha={false}
+                stroke={false}
+                width={true}
+                weight={true}
+                italic={true}
+                textColor="#ffffff"
+                strokeColor="#5227FF"
+                minFontSize={48}
+              />
+            </div>
+
+            <p className="text-xl md:text-3xl text-white/90 font-light mb-12 max-w-2xl mx-auto">
+              AI驱动的智能背单词系统
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <Link to={isConfigured ? '/user/register' : '/url-config'}>
+                <Button
+                  size="xl"
+                  variant={null}
+                  className="group relative px-12 py-4 text-lg bg-white text-black border-none !rounded-full shadow-2xl overflow-hidden transition-all hover:scale-105 hover:bg-white"
+                >
+                  <span className="relative z-10 font-bold">{isConfigured ? '立即注册' : '开始使用'}</span>
+                  <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-gray-300/50 to-transparent -skew-x-12 transition-all duration-1000 ease-in-out group-hover:left-full" />
+                </Button>
+              </Link>
+              <Link to="/user/login">
+                <Button size="xl" variant="outline" className="px-12 py-4 text-lg border-white text-white hover:bg-white/10 !rounded-full transition-all hover:scale-105">
+                  登录账号
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center p-2">
+            <div className="w-1 h-1 bg-white rounded-full" />
           </div>
         </motion.div>
+      </div>
 
-        {/* Features */}
-        <motion.div
-          className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-        >
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.name}
-              className="bg-white dark:bg-dark-surface rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
-              whileHover={{ y: -4 }}
-            >
-              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mb-4">
-                <feature.icon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {feature.name}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                {feature.description}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
+      {/* 2. Introduction Section (Black Background) */}
+      <div className="relative z-10 bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
 
-        {/* How it works */}
-        <motion.div
-          className="mt-24"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-        >
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            使用流程
-          </h2>
+          {/* Features */}
+          <div className="mb-16 text-center">
+              <SplitText
+                text="核 心 功 能"
+                className="text-3xl font-bold text-center bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 inline-block"
+                delay={50}
+                duration={1.25}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, y: 40 }}
+                to={{ opacity: 1, y: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="center"
+              />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '01',
-                title: '配置后端',
-                description: '输入后端API地址，测试连接',
-              },
-              {
-                step: '02',
-                title: '导入单词',
-                description: '创建单词本，批量导入单词',
-              },
-              {
-                step: '03',
-                title: '开始学习',
-                description: '选择学习模式，开始背单词',
-              },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                className="relative"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1 + index * 0.1, duration: 0.5 }}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            {features.map((feature) => (
+              <SpotlightCard
+                key={feature.name}
+                className="custom-spotlight-card group"
+                spotlightColor="rgba(0, 102, 255, 0.81)"
               >
-                <div className="text-center">
-                  <div className="text-6xl font-bold text-primary-200 dark:text-primary-900/30 mb-4">
-                    {item.step}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {item.description}
-                  </p>
+                <div className="w-14 h-14 bg-zinc-800 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600/20 transition-colors">
+                  <feature.icon className="w-7 h-7 text-gray-400 group-hover:text-blue-400" />
                 </div>
-              </motion.div>
+                <h3 className="text-xl font-bold text-white mb-3">
+                  {feature.name}
+                </h3>
+                <p className="text-gray-400 leading-relaxed">
+                  {feature.description}
+                </p>
+              </SpotlightCard>
             ))}
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Footer */}
-        <motion.div
-          className="mt-24 text-center text-gray-500 dark:text-gray-400 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.6 }}
-        >
-          <p>WordMaster v1.2.0 - 开源背单词系统</p>
-        </motion.div>
+          {/* How it works */}
+          <motion.div
+            className="mt-32"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            
+              
+          <div className="mb-16 text-center">
+              <SplitText
+                text="三步开启学习"
+                className="text-3xl font-bold text-center bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 inline-block"
+                delay={50}
+                duration={1.25}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, y: 40 }}
+                to={{ opacity: 1, y: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="center"
+              />
+          </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  step: '01',
+                  title: '配置后端',
+                  description: '输入后端API地址，测试连接',
+                },
+                {
+                  step: '02',
+                  title: '导入单词',
+                  description: '创建单词本，批量导入单词',
+                },
+                {
+                  step: '03',
+                  title: '开始学习',
+                  description: '选择学习模式，开始背单词',
+                },
+              ].map((item, index) => (
+                <motion.div
+                  key={item.step}
+                  className="relative bg-zinc-900/30 p-8 rounded-2xl border border-zinc-800/50"
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2, duration: 0.5 }}
+                >
+                  <div className="text-center">
+                    <div className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-purple-500 mb-6 select-none">
+                      {item.step}
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-4">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-400">
+                      {item.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Footer */}
+          <div className="mt-32 pt-8 border-t border-zinc-900 text-center text-gray-600 text-sm">
+            <p>WordMaster v1.2.0 - 开源背单词系统</p>
+          </div>
+        </div>
       </div>
     </div>
   );
