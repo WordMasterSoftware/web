@@ -261,7 +261,7 @@ const GenerateView = ({ mode, onBack, onSuccess }) => {
                   >
                     {collections.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.word_count} 词)
+                        {c.name} (本内有 {c.word_count} 词)
                       </option>
                     ))}
                   </select>
@@ -350,6 +350,7 @@ const GenerateView = ({ mode, onBack, onSuccess }) => {
                       )}
                       {mode === 'complete' && (
                          <>
+                           <li><strong>前提：本内所有单词需为已掌握或已完成</strong></li>
                            <li>一次性覆盖所有已掌握单词</li>
                            <li>通过后单词进入"已完成"状态</li>
                          </>

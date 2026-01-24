@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,28 +8,45 @@ import {
   FireIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthStore, useCollectionStore } from '@/stores';
+import { dashboardApi } from '@/api/dashboard';
 import Card from '@/components/common/Card';
 import { PageLoading } from '@/components/common/Loading';
-import { WORD_STATUS_LABELS, WORD_STATUS_COLORS } from '@/utils/constants';
 
 /**
  * 用户主看板
  */
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const { collections, fetchCollections, isLoading } = useCollectionStore();
+  const { collections, fetchCollections, isLoading: isCollectionsLoading } = useCollectionStore();
+  const [stats, setStats] = useState({
+    totalWords: 0,
+    totalCollections: 0,
+    todayLearned: 0,
+    toReview: 0,
+  });
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
 
   useEffect(() => {
-    fetchCollections(1, 10);
-  }, []);
+    fetchCollections(1, 6); // Fetch top 6 for recent list
 
-  // 计算统计数据
-  const stats = {
-    totalWords: collections.reduce((sum, c) => sum + (c.word_count || 0), 0),
-    totalCollections: collections.length,
-    todayLearned: 0, // 这里需要从后端获取
-    toReview: 0, // 这里需要从后端获取
-  };
+    const fetchStats = async () => {
+      try {
+        const data = await dashboardApi.getStats();
+        setStats({
+          totalWords: data.total_words,
+          totalCollections: data.total_collections,
+          todayLearned: data.today_learned,
+          toReview: data.to_review,
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setIsStatsLoading(false);
+      }
+    };
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const statsCards = [
     {
@@ -62,7 +79,7 @@ const Dashboard = () => {
     },
   ];
 
-  if (isLoading && collections.length === 0) {
+  if ((isCollectionsLoading || isStatsLoading) && collections.length === 0) {
     return <PageLoading />;
   }
 
