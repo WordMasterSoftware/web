@@ -23,7 +23,7 @@ const useIntersectionObserver = (options = {}) => {
       observer.disconnect();
     };
     // Destructure options to avoid unnecessary re-runs if options object reference changes but values don't
-  }, [target, options.root, options.rootMargin, options.threshold]);
+  }, [target, options.root, options.rootMargin, options.threshold, options]);
 
   // Return the state setter as the ref callback
   return [setTarget, isIntersecting];

@@ -68,51 +68,47 @@ const useStudyStore = create((set, get) => ({
    * @returns {Promise<Object>} - 后端返回结果
    */
   submitAnswer: async (itemId, userInput, isSkip = false) => {
-    try {
-      const result = await studyApi.submitAnswer(itemId, userInput, isSkip);
+    const result = await studyApi.submitAnswer(itemId, userInput, isSkip);
 
-      // 更新统计
-      // 注意：这里我们简单地根据前端行为来计数
-      // 在 StudyNew 中，错误后会强制走跳过，所以这里需要小心处理，避免重复计数
-      // 如果 isSkip 为 true，可能是用户主动跳过，也可能是错误后跳过
-      if (isSkip) {
-        set({ skipCount: get().skipCount + 1 });
+    // 更新统计
+    // 注意：这里我们简单地根据前端行为来计数
+    // 在 StudyNew 中，错误后会强制走跳过，所以这里需要小心处理，避免重复计数
+    // 如果 isSkip 为 true，可能是用户主动跳过，也可能是错误后跳过
+    if (isSkip) {
+      set({ skipCount: get().skipCount + 1 });
+    } else {
+      if (result.correct) {
+        set({ correctCount: get().correctCount + 1 });
       } else {
-        if (result.correct) {
-          set({ correctCount: get().correctCount + 1 });
-        } else {
-          set({ incorrectCount: get().incorrectCount + 1 });
-        }
+        set({ incorrectCount: get().incorrectCount + 1 });
       }
-
-      // 核心逻辑：处理待检验单词（status 从 0 → 1）
-      // 只有第一次回答正确时，才会触发这个逻辑
-      // 如果单词已经在待检验列表中，就不再添加
-      if (result.correct && result.current_status === 1) {
-        const { currentIndex, learningQueue, pendingCheckWords } = get();
-        const currentWord = learningQueue[currentIndex];
-
-        if (currentWord) {
-           // 插入位置：当前位置 + 3，但不超过队列长度
-          const insertIndex = Math.min(currentIndex + 3, learningQueue.length);
-
-          set({
-            pendingCheckWords: [
-              ...pendingCheckWords,
-              {
-                wordId: currentWord.word_id, // 修复：使用 currentWord.word_id
-                insertIndex,
-                checkCount: 0,
-              },
-            ],
-          });
-        }
-      }
-
-      return result;
-    } catch (error) {
-      throw error;
     }
+
+    // 核心逻辑：处理待检验单词（status 从 0 → 1）
+    // 只有第一次回答正确时，才会触发这个逻辑
+    // 如果单词已经在待检验列表中，就不再添加
+    if (result.correct && result.current_status === 1) {
+      const { currentIndex, learningQueue, pendingCheckWords } = get();
+      const currentWord = learningQueue[currentIndex];
+
+      if (currentWord) {
+         // 插入位置：当前位置 + 3，但不超过队列长度
+        const insertIndex = Math.min(currentIndex + 3, learningQueue.length);
+
+        set({
+          pendingCheckWords: [
+            ...pendingCheckWords,
+            {
+              wordId: currentWord.word_id, // 修复：使用 currentWord.word_id
+              insertIndex,
+              checkCount: 0,
+            },
+          ],
+        });
+      }
+    }
+
+    return result;
   },
 
   /**

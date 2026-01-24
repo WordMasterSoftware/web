@@ -79,6 +79,7 @@ const WordbookDetail = () => {
       setPage(nextPage);
     } catch (error) {
       // toast.error('加载更多失败');
+      console.log(error);
     } finally {
       setLoadingMore(false);
     }

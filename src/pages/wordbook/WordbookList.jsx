@@ -1,5 +1,6 @@
-import { useEffect, useState, Fragment, useRef } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,7 +54,7 @@ const WordbookList = () => {
   useEffect(() => {
     fetchCollections(1, 20, false);
     setPage(1);
-  }, []);
+  }, [fetchCollections]);
 
   // Infinite Scroll Trigger
   useEffect(() => {
@@ -70,6 +71,7 @@ const WordbookList = () => {
       setPage(nextPage);
     } catch (error) {
       // toast.error('加载更多失败');
+      console.log(error);
     } finally {
       setLoadingMore(false);
     }
@@ -89,6 +91,7 @@ const WordbookList = () => {
       reset();
     } catch (error) {
       toast.error('创建失败，请重试');
+      console.log(error);
     }
   };
 
@@ -106,6 +109,7 @@ const WordbookList = () => {
       setCollectionToDelete(null);
     } catch (error) {
       toast.error('删除失败，请重试');
+      console.log(error);
     }
   };
 

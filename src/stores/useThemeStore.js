@@ -128,7 +128,7 @@ const useThemeStore = create(
         // 监听系统主题变化
         window
           .matchMedia('(prefers-color-scheme: dark)')
-          .addEventListener('change', (e) => {
+          .addEventListener('change', () => {
             if (get().theme === 'system') {
               applyTheme('system');
             }

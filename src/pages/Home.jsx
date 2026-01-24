@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import {
   BookOpenIcon,
@@ -162,7 +163,7 @@ const Home = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.6 }}
         >
-          <p>WordMaster v1.0.0 - 开源背单词系统</p>
+          <p>WordMaster v1.2.0 - 开源背单词系统</p>
         </motion.div>
       </div>
     </div>

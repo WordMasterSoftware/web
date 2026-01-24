@@ -43,18 +43,6 @@ const passwordSchema = z
     path: ['confirmPassword'],
   });
 
-// LLM配置验证规则
-const llmSchema = z.object({
-  useDefaultLlm: z.boolean(),
-  llmApiKey: z.string().optional(),
-  llmBaseUrl: z
-    .string()
-    .url('请输入有效的URL地址')
-    .or(z.literal(''))
-    .optional(),
-  llmModel: z.string().optional(),
-});
-
 /**
  * 用户设置页面
  */
@@ -107,6 +95,7 @@ const Settings = () => {
       });
     } catch (error) {
       toast.error('获取LLM配置失败');
+      console.log(error);
     } finally {
       setIsLoadingLlm(false);
     }
@@ -131,6 +120,7 @@ const Settings = () => {
       toast.success('个人资料已更新');
     } catch (error) {
       toast.error('更新失败，请重试');
+      console.log(error);
     }
   };
 
@@ -165,6 +155,7 @@ const Settings = () => {
       toast.success('LLM配置已更新');
     } catch (error) {
       toast.error('更新失败，请重试');
+      console.log(error);
     } finally {
       setIsLoadingLlm(false);
     }

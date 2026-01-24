@@ -1,14 +1,14 @@
 import { Fragment, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
-import { SunIcon, MoonIcon, UserCircleIcon, BellIcon } from '@heroicons/react/24/outline';
+import { SunIcon, MoonIcon, UserCircleIcon, BellIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useAuthStore, useThemeStore, useMessageStore } from '@/stores';
 import { cn } from '@/utils';
 
 /**
  * 顶部导航栏组件
  */
-const Header = () => {
+const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { toggleTheme, actualTheme } = useThemeStore();
@@ -30,15 +30,26 @@ const Header = () => {
     <header className="sticky top-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border">
       <div className="max-w-full mx-auto px-5">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">W</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
-              WordMaster
-            </span>
-          </Link>
+          <div className="flex items-center">
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              className="p-2 -ml-2 mr-2 rounded-lg xl:hidden hover:bg-gray-100 dark:hover:bg-dark-hover text-gray-500 dark:text-gray-400"
+              onClick={onMenuClick}
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+
+            {/* Logo */}
+            <Link to="/dashboard" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">W</span>
+              </div>
+              <span className="hidden md:block text-xl font-bold text-gray-900 dark:text-white">
+                WordMaster
+              </span>
+            </Link>
+          </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">

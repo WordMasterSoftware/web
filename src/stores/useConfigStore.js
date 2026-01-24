@@ -54,6 +54,7 @@ const useConfigStore = create(
           }
           throw new Error('连接失败');
         } catch (error) {
+          console.error('连接后端服务时发生错误:', error);
           throw new Error('无法连接到后端服务');
         }
       },
