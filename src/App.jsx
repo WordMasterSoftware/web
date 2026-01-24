@@ -22,6 +22,7 @@ import WordbookDetail from '@/pages/wordbook/WordbookDetail';
 import StudyNew from '@/pages/study/StudyNew';
 import Review from '@/pages/study/Review';
 import RandomReview from '@/pages/study/RandomReview';
+import CompleteReview from '@/pages/study/CompleteReview';
 import Exam from '@/pages/exam/Exam';
 import MessageCenter from '@/pages/messages/MessageCenter';
 
@@ -85,8 +86,8 @@ function App() {
             <Route path="/messages" element={<MessageCenter />} />
             <Route path="/study/review" element={<Review />} />
             <Route path="/study/random" element={<RandomReview />} />
+            <Route path="/study/complete" element={<CompleteReview />} />
             <Route path="/exam/:examId" element={<Exam />} />
-            <Route path="/study/final" element={<div>完全复习（开发中）</div>} />
             <Route path="/statistics" element={<div>学习统计（开发中）</div>} />
           </Route>
         </Route>

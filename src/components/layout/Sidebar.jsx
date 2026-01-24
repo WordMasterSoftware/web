@@ -31,7 +31,7 @@ const Sidebar = () => {
         { name: '新词背诵', path: '/study/new' },
         { name: '即时复习', path: '/study/review' },
         { name: '随机复习', path: '/study/random' },
-        { name: '完全复习', path: '/study/final' },
+        { name: '完全复习', path: '/study/complete' },
       ],
     },
     {
