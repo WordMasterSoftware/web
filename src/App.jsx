@@ -88,7 +88,6 @@ function App() {
             <Route path="/study/random" element={<RandomReview />} />
             <Route path="/study/complete" element={<CompleteReview />} />
             <Route path="/exam/:examId" element={<Exam />} />
-            <Route path="/statistics" element={<div>学习统计（开发中）</div>} />
           </Route>
         </Route>
 

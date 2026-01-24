@@ -5,7 +5,6 @@ import {
   HomeIcon,
   BookOpenIcon,
   AcademicCapIcon,
-  ChartBarIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/utils';
@@ -32,12 +31,7 @@ const navItems = [
       { name: '随机复习', path: '/study/random' },
       { name: '完全复习', path: '/study/complete' },
     ],
-  },
-  {
-    name: '学习统计',
-    path: '/statistics',
-    icon: ChartBarIcon,
-  },
+  }
 ];
 
 const SidebarContent = ({ onClose }) => (
