@@ -5,7 +5,9 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  ExclamationCircleIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { examApi } from '@/api/exam';
 import Button from '@/components/common/Button';
@@ -20,6 +22,8 @@ const Exam = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [canNavigate, setCanNavigate] = useState(false);
 
   // Form State
   const [spellingAnswers, setSpellingAnswers] = useState({}); // { word_id: user_input }
@@ -36,6 +40,7 @@ const Exam = () => {
         setExam(res);
       } catch (error) {
         toast.error('加载试卷失败');
+        console.error(error);
         navigate('/study/review');
       } finally {
         setLoading(false);
@@ -67,8 +72,10 @@ const Exam = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!exam) return;
+  const handleSubmit = async (isForce = false) => {
+    if (!exam || submitting) return;
+
+    const forceSubmit = isForce === true;
 
     // 1. Client-side Validation for Spelling
     const wrongWords = [];
@@ -97,8 +104,8 @@ const Exam = () => {
       }
     });
 
-    if (hasEmptyFields) {
-      toast('请完成所有题目后再提交', { icon: '⚠️' });
+    if (hasEmptyFields && !forceSubmit) {
+      toast('请完成所有题目后再提交', { icon: <ExclamationCircleIcon className="w-5 h-5 text-yellow-500" /> });
       return;
     }
 
@@ -135,6 +142,53 @@ const Exam = () => {
     }
   };
 
+  // Timer Logic
+  useEffect(() => {
+    if (exam?.estimated_duration_minutes) {
+      setTimeLeft(exam.estimated_duration_minutes * 60);
+    }
+  }, [exam]);
+
+  useEffect(() => {
+    if (timeLeft === null) return;
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && !submitting && !isResultModalOpen) {
+      toast('考试时间到，自动提交中...', { icon: <ClockIcon className="w-5 h-5 text-red-500" /> });
+      handleSubmit(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, submitting, isResultModalOpen]);
+
+  // Prevent immediate navigation after submission
+  useEffect(() => {
+    if (isResultModalOpen) {
+      setCanNavigate(false);
+      const timer = setTimeout(() => {
+        setCanNavigate(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isResultModalOpen]);
+
+  const formatTime = (seconds) => {
+    if (seconds === null) return '--:--';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   if (loading) return <PageLoading />;
   if (!exam) return null;
 
@@ -144,7 +198,7 @@ const Exam = () => {
       <div className="flex items-center justify-between sticky top-0 bg-gray-50 dark:bg-dark-bg z-10 py-4 border-b border-gray-200 dark:border-dark-border">
         <div className="flex items-center">
           <button
-            onClick={() => navigate('/study/review')}
+            onClick={() => navigate(-1)}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-hover transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -154,19 +208,34 @@ const Exam = () => {
               {exam.collection_name} - 复习测试
             </h1>
             <p className="text-sm text-gray-500">
-              {exam.spelling_section?.length || 0} 个单词 · {exam.translation_section?.length || 0} 个例句 · 预计用时 {exam.estimated_duration_minutes} 分钟
+              {exam.spelling_section?.length || 0} 个单词 · {exam.translation_section?.length || 0} 个例句 · 考试限时 {exam.estimated_duration_minutes} 分钟
             </p>
           </div>
         </div>
-        <Button
-          variant="primary"
-          onClick={handleSubmit}
-          loading={submitting}
-          className="shadow-lg"
-        >
-          <PaperAirplaneIcon className="w-5 h-5 mr-2" />
-          提交试卷
-        </Button>
+        <div className="flex items-center gap-4">
+          {timeLeft !== null && (
+            <div className={`hidden md:flex items-center px-4 py-2 rounded-lg border transition-colors ${
+              timeLeft < 60
+                ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                : 'bg-white border-gray-200 text-gray-700 dark:bg-dark-card dark:border-gray-700 dark:text-gray-300'
+            }`}>
+              <ClockIcon className="w-5 h-5 mr-2" />
+              <span className={`font-mono text-lg font-bold ${timeLeft < 60 ? 'animate-pulse' : ''}`}>
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+          )}
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            loading={submitting}
+            className="shadow-lg"
+          >
+            <PaperAirplaneIcon className="w-5 h-5 mr-2" />
+            <span className="hidden md:inline">提交试卷</span>
+            <span className="md:hidden">提交</span>
+          </Button>
+        </div>
       </div>
 
       {/* Part 1: Spelling */}
@@ -275,13 +344,15 @@ const Exam = () => {
             <Button
               variant="primary"
               fullWidth
-              onClick={() => navigate('/study/review')}
+              disabled={!canNavigate}
+              onClick={() => navigate(-1)}
             >
-              返回复习列表
+              {!canNavigate ? '正在处理中...' : '返回复习列表'}
             </Button>
             <Button
               variant="ghost"
               fullWidth
+              disabled={!canNavigate}
               onClick={() => navigate('/messages')}
             >
               前往消息中心

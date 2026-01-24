@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -42,6 +43,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
         }
       } catch (error) {
         toast.error('获取单词本失败');
+        console.error('获取单词本失败', error);
       } finally {
         setLoading(false);
       }
@@ -70,7 +72,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
       }
     };
     fetchAvailableWords();
-  }, [selectedCollection]);
+  }, [selectedCollection, wordCount]);
 
   const handleGenerate = async () => {
     if (!selectedCollection) {
@@ -85,6 +87,11 @@ const GenerateView = ({ onBack, onSuccess }) => {
 
     if (wordCount > availableWords) {
       toast.error(`单词数量不能超过可用数量（${availableWords}个）`);
+      return;
+    }
+
+    if (wordCount > 50) {
+      toast.error('每次生成的单词数量不能超过50个');
       return;
     }
 
@@ -139,7 +146,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
           <div className="space-y-4">
             <div className="flex items-center text-blue-100">
               <CheckCircleIcon className="w-5 h-5 mr-3 text-blue-300" />
-              <span>精准筛选 Status 2 单词</span>
+              <span>精准筛选待复习单词</span>
             </div>
             <div className="flex items-center text-blue-100">
               <CheckCircleIcon className="w-5 h-5 mr-3 text-blue-300" />
@@ -200,7 +207,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
                 {checkingAvailability && (
                   <span className="ml-2 text-xs text-gray-400">检查中...</span>
                 )}
-                {!checkingAvailability && availableWords > 0 && (
+                {!checkingAvailability && availableWords >= 0 && (
                   <span className="ml-2 text-xs text-gray-500">
                     （可用: {availableWords} 个）
                   </span>
@@ -209,14 +216,14 @@ const GenerateView = ({ onBack, onSuccess }) => {
               <input
                 type="number"
                 min="10"
-                max={availableWords}
+                max={Math.min(availableWords, 50)}
                 value={wordCount}
-                onChange={(e) => setWordCount(Math.max(10, Math.min(availableWords, parseInt(e.target.value) || 10)))}
+                onChange={(e) => setWordCount(Math.max(10, Math.min(availableWords, 50, parseInt(e.target.value) || 10)))}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white"
                 disabled={checkingAvailability || availableWords === 0}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                最少 10 个，最多 {availableWords} 个
+                最少 10 个，单次最多 50 个
               </p>
             </div>
 
@@ -232,7 +239,7 @@ const GenerateView = ({ onBack, onSuccess }) => {
                   <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                     <ul className="list-disc pl-5 space-y-1">
                       <li>优先选择最近学习的单词</li>
-                      <li>可自定义单词数量（10-{availableWords || '...'} 个）</li>
+                      <li>已经用于生成试卷的单词无法被选中</li>
                       <li>需要单词本中至少有 10 个待复习单词</li>
                     </ul>
                   </div>
@@ -299,6 +306,7 @@ const ExamList = ({ onGenerate }) => {
       setTotal(res.pagination?.total || 0);
     } catch (error) {
       toast.error('获取考试记录失败');
+      console.error('获取考试记录失败', error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -334,6 +342,7 @@ const ExamList = ({ onGenerate }) => {
       }
     } catch (error) {
       toast.error('删除失败');
+      console.error('删除考试记录失败', error);
     } finally {
       setDeleteId(null);
     }
@@ -415,7 +424,7 @@ const ExamList = ({ onGenerate }) => {
                 </div>
 
                 <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 border-t pt-4 border-gray-100 dark:border-dark-border">
-                  <span>{exam.total_words} 单词</span>
+                  <span>{exam.spelling_words_count} 单词</span>
                   <span>{exam.translation_sentences_count} 例句</span>
                 </div>
 
