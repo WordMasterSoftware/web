@@ -41,9 +41,10 @@ function App() {
         position="top-center"
         toastOptions={{
           duration: 3000,
+          className: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg',
           style: {
-            background: 'var(--toast-bg)',
-            color: 'var(--toast-color)',
+            padding: '16px',
+            borderRadius: '12px',
           },
           success: {
             iconTheme: {

@@ -4,7 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
-  darkMode: ['class', "class"], // 使用 class 策略实现深色模式
+  darkMode: 'class', // 使用 class 策略实现深色模式
   theme: {
   	extend: {
   		colors: {
