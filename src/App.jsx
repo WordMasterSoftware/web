@@ -25,6 +25,7 @@ import RandomReview from '@/pages/study/RandomReview';
 import CompleteReview from '@/pages/study/CompleteReview';
 import Exam from '@/pages/exam/Exam';
 import MessageCenter from '@/pages/messages/MessageCenter';
+import Marketplace from '@/pages/Marketplace';
 
 function App() {
   const { initTheme } = useThemeStore();
@@ -88,6 +89,7 @@ function App() {
             <Route path="/study/random" element={<RandomReview />} />
             <Route path="/study/complete" element={<CompleteReview />} />
             <Route path="/exam/:examId" element={<Exam />} />
+            <Route path="/marketplace" element={<Marketplace />} />
           </Route>
         </Route>
 

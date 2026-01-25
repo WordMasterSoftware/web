@@ -49,7 +49,7 @@ const Home = () => {
         {/* Background Effect - Only for this section */}
         <div className="absolute inset-0 z-0 opacity-60">
           <ColorBends
-            colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+            colors={["#ff5c7a", "#ffae00", "#fffc5c", "#00ccff", "#0051ff"]}
             rotation={-6}
             speed={0.2}
             scale={1}

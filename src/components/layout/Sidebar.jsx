@@ -6,6 +6,7 @@ import {
   BookOpenIcon,
   AcademicCapIcon,
   XMarkIcon,
+  ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/utils';
 
@@ -14,6 +15,11 @@ const navItems = [
     name: '主看板',
     path: '/dashboard',
     icon: HomeIcon,
+  },
+  {
+    name: '单词市场',
+    path: '/marketplace',
+    icon: ShoppingBagIcon,
   },
   {
     name: '单词本',
