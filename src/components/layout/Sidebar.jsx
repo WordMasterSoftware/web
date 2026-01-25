@@ -103,7 +103,7 @@ const SidebarContent = ({ onClose }) => (
     {/* Footer */}
     <div className="p-4 border-t border-gray-200 dark:border-dark-border">
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-        WordMaster v1.2.0
+        WordMaster v1.3.0
       </p>
     </div>
   </div>

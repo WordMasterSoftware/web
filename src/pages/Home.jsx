@@ -240,7 +240,7 @@ const Home = () => {
 
           {/* Footer */}
           <div className="mt-32 pt-8 border-t border-zinc-900 flex flex-col items-center justify-center space-y-4 text-center text-gray-600 text-sm">
-            <p>WordMaster v1.2.0 - 开源背单词系统</p>
+            <p>WordMaster v1.3.0 - 开源背单词系统</p>
             <a
               href="https://github.com/WordMasterSoftware"
               target="_blank"
