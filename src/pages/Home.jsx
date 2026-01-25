@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { Github } from 'lucide-react';
 import {
   BookOpenIcon,
   AcademicCapIcon,
@@ -238,8 +239,17 @@ const Home = () => {
           </motion.div>
 
           {/* Footer */}
-          <div className="mt-32 pt-8 border-t border-zinc-900 text-center text-gray-600 text-sm">
+          <div className="mt-32 pt-8 border-t border-zinc-900 flex flex-col items-center justify-center space-y-4 text-center text-gray-600 text-sm">
             <p>WordMaster v1.2.0 - 开源背单词系统</p>
+            <a
+              href="https://github.com/WordMasterSoftware"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-2 text-gray-500 hover:text-white transition-colors"
+            >
+              <Github className="w-5 h-5" />
+              <span>WordMasterSoftware</span>
+            </a>
           </div>
         </div>
       </div>
