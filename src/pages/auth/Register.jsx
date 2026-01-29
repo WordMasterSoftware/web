@@ -64,9 +64,14 @@ const Register = () => {
         password: data.password,
         nickname: data.nickname || data.username,
       });
-      login(response.data);
-      toast.success('注册成功！');
-      navigate('/dashboard');
+
+      if (response.success) {
+        login(response.data);
+        toast.success('注册成功！');
+        navigate('/dashboard');
+      } else {
+        toast.error(response.message || '注册失败');
+      }
     } catch (error) {
       toast.error(
         error.response?.data?.message || '注册失败，请检查输入信息'
