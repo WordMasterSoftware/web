@@ -13,6 +13,37 @@ import { dashboardApi } from '@/api/dashboard';
 import Card from '@/components/common/Card';
 import { PageLoading } from '@/components/common/Loading';
 
+const STATS_CONFIG = [
+  {
+    key: 'totalWords',
+    name: '总单词数',
+    icon: BookOpenIcon,
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
+  },
+  {
+    key: 'totalCollections',
+    name: '单词本',
+    icon: BookOpenIcon,
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+  },
+  {
+    key: 'todayLearned',
+    name: '今日学习',
+    icon: FireIcon,
+    color: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+  },
+  {
+    key: 'toReview',
+    name: '待复习',
+    icon: ClockIcon,
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+  },
+];
+
 /**
  * 用户主看板
  */
@@ -28,9 +59,9 @@ const Dashboard = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(true);
 
   useEffect(() => {
-    fetchCollections(1, 6); // Fetch top 6 for recent list
+    const initDashboard = async () => {
+      fetchCollections(1, 6); // Fetch top 6 for recent list
 
-    const fetchStats = async () => {
       try {
         const data = await dashboardApi.getStats();
         setStats({
@@ -45,40 +76,10 @@ const Dashboard = () => {
         setIsStatsLoading(false);
       }
     };
-    fetchStats();
+
+    initDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const statsCards = [
-    {
-      name: '总单词数',
-      value: stats.totalWords,
-      icon: BookOpenIcon,
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/30',
-    },
-    {
-      name: '单词本',
-      value: stats.totalCollections,
-      icon: BookOpenIcon,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
-    },
-    {
-      name: '今日学习',
-      value: stats.todayLearned,
-      icon: FireIcon,
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
-    },
-    {
-      name: '待复习',
-      value: stats.toReview,
-      icon: ClockIcon,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-    },
-  ];
 
   if ((isCollectionsLoading || isStatsLoading) && collections.length === 0) {
     return <PageLoading />;
@@ -102,9 +103,9 @@ const Dashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsCards.map((stat, index) => (
+        {STATS_CONFIG.map((stat, index) => (
           <motion.div
-            key={stat.name}
+            key={stat.key}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
@@ -119,7 +120,7 @@ const Dashboard = () => {
                     {stat.name}
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stat.value}
+                    {stats[stat.key]}
                   </p>
                 </div>
               </div>

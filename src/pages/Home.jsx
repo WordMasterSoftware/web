@@ -14,34 +14,53 @@ import TextPressure from '@/components/reactbits/TextPressure';
 import ColorBends from '@/components/reactbits/ColorBends';
 import SpotlightCard from '@/components/reactbits/SpotlightCard';
 import SplitText from '@/components/reactbits/SplitText';
+
+const FEATURES = [
+  {
+    name: 'AI智能翻译',
+    description: '基于大模型的智能单词翻译，自动生成例句和音标',
+    icon: SparklesIcon,
+  },
+  {
+    name: '科学记忆曲线',
+    description: '根据艾宾浩斯遗忘曲线，智能安排复习时间',
+    icon: AcademicCapIcon,
+  },
+  {
+    name: '多模式学习',
+    description: '新词背诵、即时复习、随机复习、完全复习四种模式',
+    icon: BookOpenIcon,
+  },
+  {
+    name: '数据可视化',
+    description: '学习进度、复习曲线一目了然，激励持续学习',
+    icon: ChartBarIcon,
+  },
+];
+
+const STEPS = [
+  {
+    step: '01',
+    title: '配置后端',
+    description: '输入后端API地址，测试连接',
+  },
+  {
+    step: '02',
+    title: '导入单词',
+    description: '创建单词本，批量导入单词',
+  },
+  {
+    step: '03',
+    title: '开始学习',
+    description: '选择学习模式，开始背单词',
+  },
+];
+
 /**
  * 首页 - 系统介绍
  */
 const Home = () => {
   const { isConfigured } = useConfigStore();
-
-  const features = [
-    {
-      name: 'AI智能翻译',
-      description: '基于大模型的智能单词翻译，自动生成例句和音标',
-      icon: SparklesIcon,
-    },
-    {
-      name: '科学记忆曲线',
-      description: '根据艾宾浩斯遗忘曲线，智能安排复习时间',
-      icon: AcademicCapIcon,
-    },
-    {
-      name: '多模式学习',
-      description: '新词背诵、即时复习、随机复习、完全复习四种模式',
-      icon: BookOpenIcon,
-    },
-    {
-      name: '数据可视化',
-      description: '学习进度、复习曲线一目了然，激励持续学习',
-      icon: ChartBarIcon,
-    },
-  ];
 
   return (
     <div className="bg-black min-h-screen">
@@ -151,7 +170,7 @@ const Home = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            {features.map((feature) => (
+            {FEATURES.map((feature) => (
               <SpotlightCard
                 key={feature.name}
                 className="custom-spotlight-card group"
@@ -178,8 +197,8 @@ const Home = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            
-              
+
+
           <div className="mb-16 text-center">
               <SplitText
                 text="三步开启学习"
@@ -197,23 +216,7 @@ const Home = () => {
           </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  step: '01',
-                  title: '配置后端',
-                  description: '输入后端API地址，测试连接',
-                },
-                {
-                  step: '02',
-                  title: '导入单词',
-                  description: '创建单词本，批量导入单词',
-                },
-                {
-                  step: '03',
-                  title: '开始学习',
-                  description: '选择学习模式，开始背单词',
-                },
-              ].map((item, index) => (
+              {STEPS.map((item, index) => (
                 <motion.div
                   key={item.step}
                   className="relative bg-zinc-900/30 p-8 rounded-2xl border border-zinc-800/50"

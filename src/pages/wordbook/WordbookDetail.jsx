@@ -9,8 +9,9 @@ import {
   PlayIcon,
   ArrowUpTrayIcon,
   TrashIcon,
+  DocumentIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
-import * as XLSX from 'xlsx';
 import { useCollectionStore } from '@/stores';
 import Button from '@/components/common/Button';
 import Modal from '@/components/common/Modal';
@@ -18,6 +19,7 @@ import Card from '@/components/common/Card';
 import { PageLoading } from '@/components/common/Loading';
 import { WORD_STATUS_LABELS, WORD_STATUS_COLORS } from '@/utils/constants';
 import { cleanWordList } from '@/utils/validation';
+import { parseExcelWords } from '@/utils/fileHelpers';
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 /**
@@ -92,53 +94,25 @@ const WordbookDetail = () => {
 
     setFileName(file.name);
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = evt.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+    try {
+      const wordsFromExcel = await parseExcelWords(file);
 
-        // 获取第一个工作表
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        // 转换为 JSON 数组
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        // 提取所有单元格的文本内容作为单词
-        const wordsFromExcel = [];
-        jsonData.forEach(row => {
-          if (Array.isArray(row)) {
-            row.forEach(cell => {
-              if (cell && typeof cell === 'string') {
-                wordsFromExcel.push(cell);
-              } else if (cell && typeof cell === 'number') {
-                wordsFromExcel.push(String(cell));
-              }
-            });
-          }
-        });
-
-        // 自动追加到输入框
-        if (wordsFromExcel.length > 0) {
-          const currentWords = wordInput ? wordInput + '\n' : '';
-          setWordInput(currentWords + wordsFromExcel.join('\n'));
-          toast.success(`成功从Excel解析出 ${wordsFromExcel.length} 个单词`);
-        } else {
-          toast.error('未能从文件中识别出单词');
-        }
-      } catch (error) {
-        console.error('Excel解析失败:', error);
-        toast.error('文件解析失败，请检查格式');
+      if (wordsFromExcel.length > 0) {
+        const currentWords = wordInput ? wordInput + '\n' : '';
+        setWordInput(currentWords + wordsFromExcel.join('\n'));
+        toast.success(`成功从Excel解析出 ${wordsFromExcel.length} 个单词`);
+      } else {
+        toast.error('未能从文件中识别出单词');
       }
+    } catch (error) {
+      console.error('Excel解析失败:', error);
+      toast.error('文件解析失败，请检查格式');
+    }
 
-      // 清空 input 允许重复选择同一文件
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    };
-
-    reader.readAsBinaryString(file);
+    // 清空 input 允许重复选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const triggerFileUpload = () => {
@@ -247,8 +221,10 @@ const WordbookDetail = () => {
                 {currentCollection.name}
               </h1>
               {currentCollection.description && (
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {currentCollection.description}
+                <p className="text-gray-600 dark:text-gray-400 mt-1 break-all">
+                  {currentCollection.description.length > 300
+                    ? `${currentCollection.description.substring(0, 300)}...`
+                    : currentCollection.description}
                 </p>
               )}
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -415,13 +391,19 @@ const WordbookDetail = () => {
           <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
              <p>• 支持文本直接粘贴：换行、逗号、空格分隔，自动去重</p>
              <p>• 支持 Excel 导入：.xlsx/.xls 格式，自动读取第一个工作表的所有内容</p>
-             {fileName && <p className="text-primary-600 font-medium mt-1">📄 已加载: {fileName}</p>}
+             {fileName && (
+               <p className="text-primary-600 font-medium mt-1 flex items-center">
+                 <DocumentIcon className="w-4 h-4 mr-1" />
+                 已加载: {fileName}
+               </p>
+             )}
           </div>
 
           {wordInput && (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                📊 统计：{cleanWordList(wordInput).length} 个有效单词
+              <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center">
+                <ChartBarIcon className="w-4 h-4 mr-2" />
+                统计：{cleanWordList(wordInput).length} 个有效单词
               </p>
             </div>
           )}

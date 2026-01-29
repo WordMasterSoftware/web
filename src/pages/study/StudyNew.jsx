@@ -20,64 +20,7 @@ import TTSPlayer from '@/components/study/TTSPlayer';
 import UnderscoreInput from '@/components/study/UnderscoreInput';
 import { validateSpelling } from '@/utils/validation';
 
-/**
- * 简单的 CSS 礼花组件 (已修复 Impure Function 报错)
- * 逻辑：使用 useEffect 在挂载时生成一次性随机数据，避免渲染期间调用 Math.random
- */
-const Confetti = () => {
-  const [particles, setParticles] = useState([]);
-  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-
-  useEffect(() => {
-    const particleCount = 50;
-    const newParticles = [];
-
-    // 在 Effect 中生成随机数据，保证纯净渲染
-    for (let i = 0; i < particleCount; i++) {
-      newParticles.push({
-        id: i,
-        left: Math.random() * 100,
-        animationDuration: 3 + Math.random() * 2,
-        delay: Math.random() * 5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * 360,
-        isCircle: Math.random() > 0.5,
-      });
-    }
-    setParticles(newParticles);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute top-[-20px] w-3 h-3 opacity-80"
-          style={{
-            left: `${p.left}%`,
-            backgroundColor: p.color,
-            borderRadius: p.isCircle ? '50%' : '0',
-            transform: `rotate(${p.rotation}deg)`,
-            animation: `fall ${p.animationDuration}s linear ${p.delay}s infinite`,
-          }}
-        />
-      ))}
-      <style>{`
-        @keyframes fall {
-          0% {
-            transform: translateY(-20px) rotate(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
+import Confetti from '@/components/common/Confetti';
 
 /**
  * 新词背诵页面
@@ -127,14 +70,15 @@ const StudyNew = () => {
       return;
     }
 
-    // 重置状态
     setIsCompleted(false);
     setIsInitialized(false);
 
     const init = async () => {
       try {
-        await fetchCollectionDetail(collectionId);
-        await startStudySession(collectionId, 'new');
+        await Promise.all([
+          fetchCollectionDetail(collectionId),
+          startStudySession(collectionId, 'new')
+        ]);
         setIsInitialized(true);
       } catch (error) {
         console.error('Initialization failed:', error);
@@ -142,76 +86,45 @@ const StudyNew = () => {
     };
 
     init();
-
-    return () => {
-      // 组件卸载时不重置，保持状态
-    };
   }, [collectionId, fetchCollectionDetail, startStudySession, navigate]);
 
   // 检查是否完成
   useEffect(() => {
-    // 只有在会话初始化完成后才开始检查
-    if (!isInitialized) return;
+    if (!isInitialized || isCompleted) return;
 
-    // 条件：1. 队列不为空（有单词） 2. 当前索引到达队列末尾 3. 至少学习过一个单词 4. 没有显示过完成提示
-    if (
-      learningQueue.length > 0 &&
-      currentIndex >= learningQueue.length &&
-      currentIndex > 0 &&
-      !isLoading &&
-      !isCompleted
-    ) {
+    // 条件：队列非空且索引越界
+    const hasFinishedQueue = learningQueue.length > 0 && currentIndex >= learningQueue.length;
+
+    if (hasFinishedQueue && !isLoading) {
       setIsCompleted(true);
-      // 也可以在这里播放一个完成音效
     }
   }, [currentIndex, learningQueue, isLoading, isCompleted, isInitialized]);
 
   // 处理提交答案
   const handleSubmit = async () => {
-    if (!userInput.trim()) {
-      return;
-    }
-
-    if (!currentWord) return;
+    if (!userInput.trim() || !currentWord) return;
 
     setIsSubmitting(true);
 
     try {
-      // 先验证拼写
-      const validation = validateSpelling(userInput, currentWord.word);
-      console.log('前端验证结果:', validation);
+      // 1. 验证拼写
+      const { isCorrect } = validateSpelling(userInput, currentWord.word);
 
-      if (validation.isCorrect) {
+      if (isCorrect) {
         setFeedbackState('correct');
+        toast.success('回答正确！');
+
+        // 延迟跳转
+        setTimeout(handleNext, 1500);
       } else {
         setFeedbackState('incorrect');
-        // 错误时自动翻转卡片显示正确答案
         setIsFlipped(true);
-        // 标记为跳过（因为看答案了）
         setIsCardFlippedToSkip(true);
-      }
-
-      // 提交到后端
-      // 如果错误，这里其实只是记录一次错误尝试，不算真正提交通过
-      // 但为了逻辑统一，我们还是调用 submitAnswer，后端会记录 status
-      const result = await submitAnswer(currentWord.item_id, userInput, false);
-      console.log('后端验证结果:', result);
-
-      // 显示反馈
-      if (result.correct) {
-        toast.success(result.status_update || '回答正确！');
-
-        // 只有回答正确时才自动跳转
-        setTimeout(() => {
-          handleNext();
-        }, 1500);
-      } else {
-        // 回答错误
         toast.error('回答错误，请查看正确答案');
-        // 不自动跳转，停留在当前页面，已自动翻转卡片
-        // 此时已标记 setIsCardFlippedToSkip(true)，用户只能点"跳过"或者继续尝试输入(虽然没意义了，因为已经看了答案)
-        // 实际上，如果已经错误翻牌了，应该引导用户点"跳过"进入下一个
       }
+
+      // 2. 提交结果到后端 (即使错误也提交记录)
+      await submitAnswer(currentWord.item_id, userInput, false);
 
     } catch (error) {
       console.error('Submit error:', error);

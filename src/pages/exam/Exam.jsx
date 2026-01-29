@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -14,6 +14,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import Modal from '@/components/common/Modal';
 import { PageLoading } from '@/components/common/Loading';
+import useTimer from '@/hooks/useTimer';
 
 const Exam = () => {
   const { examId } = useParams();
@@ -22,7 +23,6 @@ const Exam = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(null);
   const [canNavigate, setCanNavigate] = useState(false);
 
   // Form State
@@ -31,6 +31,25 @@ const Exam = () => {
 
   // Validation State (for immediate feedback if needed, or final check)
   const [spellingValidation, setSpellingValidation] = useState({}); // { word_id: boolean }
+
+  // Forward declaration for useTimer callback
+  // Use a ref to access the latest submit function without recreating the timer hook
+  const handleSubmitRef = useRef(null);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+
+  const onTimerExpire = () => {
+    if (!submitting && !isResultModalOpen) {
+      toast('考试时间到，自动提交中...', { icon: <ClockIcon className="w-5 h-5 text-red-500" /> });
+      if (handleSubmitRef.current) {
+        handleSubmitRef.current(true);
+      }
+    }
+  };
+
+  const { timeLeft, formattedTime, stop: stopTimer } = useTimer(exam?.estimated_duration_minutes, onTimerExpire);
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -142,34 +161,6 @@ const Exam = () => {
     }
   };
 
-  // Timer Logic
-  useEffect(() => {
-    if (exam?.estimated_duration_minutes) {
-      setTimeLeft(exam.estimated_duration_minutes * 60);
-    }
-  }, [exam]);
-
-  useEffect(() => {
-    if (timeLeft === null) return;
-    if (timeLeft <= 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) return 0;
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  useEffect(() => {
-    if (timeLeft === 0 && !submitting && !isResultModalOpen) {
-      toast('考试时间到，自动提交中...', { icon: <ClockIcon className="w-5 h-5 text-red-500" /> });
-      handleSubmit(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, submitting, isResultModalOpen]);
 
   // Prevent immediate navigation after submission
   useEffect(() => {

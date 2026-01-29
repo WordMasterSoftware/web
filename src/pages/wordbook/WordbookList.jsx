@@ -20,7 +20,7 @@ import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 // 创建单词本表单验证
 const schema = z.object({
   name: z.string().min(1, '请输入单词本名称').max(100, '名称最多100个字符'),
-  description: z.string().max(500, '描述最多500个字符').optional(),
+  description: z.string().max(350, '描述最多350个字符').optional(),
 });
 
 /**
