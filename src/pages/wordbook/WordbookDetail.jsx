@@ -218,14 +218,26 @@ const WordbookDetail = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {currentCollection.name}
+                <span className="sm:hidden">
+                  {currentCollection.name.length > 5
+                    ? `${currentCollection.name.substring(0, 5)}...`
+                    : currentCollection.name}
+                </span>
+                <span className="hidden sm:inline">{currentCollection.name}</span>
               </h1>
               {currentCollection.description && (
-                <p className="text-gray-600 dark:text-gray-400 mt-1 break-all">
-                  {currentCollection.description.length > 300
-                    ? `${currentCollection.description.substring(0, 300)}...`
-                    : currentCollection.description}
-                </p>
+                <div className="mt-1 pr-4">
+                  <p className="text-gray-600 dark:text-gray-400 break-all hidden sm:block">
+                    {currentCollection.description.length > 100
+                      ? `${currentCollection.description.substring(0, 100)}...`
+                      : currentCollection.description}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400 break-all sm:hidden">
+                    {currentCollection.description.length > 30
+                      ? `${currentCollection.description.substring(0, 30)}...`
+                      : currentCollection.description}
+                  </p>
+                </div>
               )}
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 {total || 0} 个单词
