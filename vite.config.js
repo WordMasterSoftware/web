@@ -15,12 +15,34 @@ export default defineConfig({
     open: true
   },
   build: {
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         // 手动分包配置
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor'; // 将所有 node_modules 中的依赖打包到一个叫 vendor 的文件中
+            // 3D 库体积较大
+            if (id.includes('three') || id.includes('ogl')) {
+              return 'three-vendor';
+            }
+
+            // Excel 处理库
+            if (id.includes('xlsx')) {
+              return 'xlsx-vendor';
+            }
+
+            // 图表库
+            if (id.includes('recharts')) {
+              return 'charts-vendor';
+            }
+
+            // 动画库
+            if (id.includes('framer-motion') || id.includes('gsap')) {
+              return 'motion-vendor';
+            }
+
+            // 其他所有第三方依赖打包到 vendor 中，避免依赖顺序问题
+            return 'vendor';
           }
         },
       },

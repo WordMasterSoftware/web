@@ -9,7 +9,7 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import Button from '@/components/common/Button';
-import { useConfigStore } from '@/stores';
+import { useConfigStore, useAuthStore } from '@/stores';
 import TextPressure from '@/components/reactbits/TextPressure';
 import ColorBends from '@/components/reactbits/ColorBends';
 import SpotlightCard from '@/components/reactbits/SpotlightCard';
@@ -61,6 +61,7 @@ const STEPS = [
  */
 const Home = () => {
   const { isConfigured } = useConfigStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <div className="bg-black min-h-screen">
@@ -111,21 +112,40 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <Link to={isConfigured ? '/user/register' : '/url-config'}>
-                <Button
-                  size="xl"
-                  variant={null}
-                  className="group relative px-12 py-4 text-lg bg-white text-black border-none !rounded-full shadow-2xl overflow-hidden transition-all hover:scale-105 hover:bg-white"
-                >
-                  <span className="relative z-10 font-bold">{isConfigured ? '立即注册' : '开始使用'}</span>
-                  <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-gray-300/50 to-transparent -skew-x-12 transition-all duration-1000 ease-in-out group-hover:left-full" />
-                </Button>
-              </Link>
-              <Link to="/user/login">
-                <Button size="xl" variant="outline" className="px-12 py-4 text-lg border-white text-white hover:bg-white/10 !rounded-full transition-all hover:scale-105">
-                  登录账号
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button
+                    size="xl"
+                    variant={null}
+                    className="group relative px-12 py-4 text-lg bg-white text-black border-none !rounded-full shadow-2xl overflow-hidden transition-all hover:scale-105 hover:bg-white"
+                  >
+                    <span className="relative z-10 font-bold">进入看板</span>
+                    <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-gray-300/50 to-transparent -skew-x-12 transition-all duration-1000 ease-in-out group-hover:left-full" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to={isConfigured ? '/user/register' : '/url-config'}>
+                    <Button
+                      size="xl"
+                      variant={null}
+                      className="group relative px-12 py-4 text-lg bg-white text-black border-none !rounded-full shadow-2xl overflow-hidden transition-all hover:scale-105 hover:bg-white"
+                    >
+                      <span className="relative z-10 font-bold">{isConfigured ? '立即注册' : '开始使用'}</span>
+                      <div className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-gray-300/50 to-transparent -skew-x-12 transition-all duration-1000 ease-in-out group-hover:left-full" />
+                    </Button>
+                  </Link>
+                  <Link to="/user/login">
+                    <Button
+                      size="xl"
+                      variant="outline"
+                      className="px-12 py-4 text-lg border-white text-white hover:bg-white/10 !rounded-full transition-all hover:scale-105 dark:border-white dark:text-white"
+                    >
+                      登录账号
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         </div>

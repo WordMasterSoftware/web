@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { Tab } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
@@ -8,12 +9,15 @@ import {
   UserCircleIcon,
   LockClosedIcon,
   CpuChipIcon,
+  ServerIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useConfigStore } from '@/stores';
 import { authApi } from '@/api';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import Card from '@/components/common/Card';
+import Modal from '@/components/common/Modal';
 import { cn } from '@/utils';
 
 // 个人资料验证规则
@@ -47,8 +51,11 @@ const passwordSchema = z
  * 用户设置页面
  */
 const Settings = () => {
-  const { user, updateUser } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, updateUser, logout } = useAuthStore();
+  const { baseURL, clearConfig } = useConfigStore();
   const [activeTab, setActiveTab] = useState(0);
+  const [isSwitchServerModalOpen, setIsSwitchServerModalOpen] = useState(false);
 
   // 个人资料表单
   const {
@@ -161,10 +168,37 @@ const Settings = () => {
     }
   };
 
+  // 切换服务器地址 - 打开弹窗
+  const handleSwitchServer = () => {
+    setIsSwitchServerModalOpen(true);
+  };
+
+  // 确认切换服务器
+  const confirmSwitchServer = () => {
+    // 1. 清除 Auth Store
+    logout();
+
+    // 2. 清除 Config Store
+    clearConfig();
+
+    // 3. 清除 Cookie (简单遍历清除)
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+
+    // 4. 关闭弹窗并跳转
+    setIsSwitchServerModalOpen(false);
+    toast.success('已重置服务器配置');
+    navigate('/url-config');
+  };
+
   const tabs = [
     { name: '个人资料', icon: UserCircleIcon },
     { name: '修改密码', icon: LockClosedIcon },
     { name: 'LLM配置', icon: CpuChipIcon },
+    { name: '服务器配置', icon: ServerIcon },
   ];
 
   return (
@@ -347,9 +381,73 @@ const Settings = () => {
                 </div>
               </div>
             </Tab.Panel>
+
+            {/* 服务器配置 */}
+            <Tab.Panel>
+              <div className="space-y-6">
+                <div className="bg-gray-50 dark:bg-dark-hover p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    当前连接信息
+                  </h3>
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 mb-6">
+                    <ServerIcon className="w-5 h-5" />
+                    <span className="font-mono text-sm break-all">
+                      {baseURL || '未配置'}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+                      切换服务器
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      如果您需要连接到其他服务器，点击下方按钮。这将清除当前的登录状态和连接配置，并跳转到配置页面。
+                    </p>
+                    <Button
+                      onClick={handleSwitchServer}
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20"
+                    >
+                      切换服务器地址
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       </Card>
+
+      {/* Switch Server Confirmation Modal */}
+      <Modal
+        isOpen={isSwitchServerModalOpen}
+        onClose={() => setIsSwitchServerModalOpen(false)}
+        title="切换服务器地址"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start space-x-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-800 dark:text-amber-200">
+            <ExclamationTriangleIcon className="w-6 h-6 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium mb-1">注意：此操作将重置应用</p>
+              <p>切换服务器将退出当前账号，并清除所有本地配置。您需要重新配置服务器地址并登录。</p>
+            </div>
+          </div>
+          <p className="text-gray-900 dark:text-white font-medium">
+            确定要继续吗？
+          </p>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="ghost" onClick={() => setIsSwitchServerModalOpen(false)}>
+              取消
+            </Button>
+            <Button variant="danger" onClick={confirmSwitchServer}>
+              <ServerIcon className="w-4 h-4 mr-2" />
+              确认切换
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

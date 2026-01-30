@@ -1,31 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useThemeStore } from '@/stores';
+import { PageLoading } from '@/components/common/Loading';
 
 // Layout
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import ConfigGuard from '@/components/layout/ConfigGuard';
 
-// Public Pages
-import Home from '@/pages/Home';
-import UrlConfig from '@/pages/UrlConfig';
-import Login from '@/pages/auth/Login';
-import Register from '@/pages/auth/Register';
+// Lazy Load Public Pages
+const Home = lazy(() => import('@/pages/Home'));
+const UrlConfig = lazy(() => import('@/pages/UrlConfig'));
+const Login = lazy(() => import('@/pages/auth/Login'));
+const Register = lazy(() => import('@/pages/auth/Register'));
 
-// Protected Pages
-import Dashboard from '@/pages/dashboard/Dashboard';
-import Settings from '@/pages/user/Settings';
-import WordbookList from '@/pages/wordbook/WordbookList';
-import WordbookDetail from '@/pages/wordbook/WordbookDetail';
-import StudyNew from '@/pages/study/StudyNew';
-import Review from '@/pages/study/Review';
-import RandomReview from '@/pages/study/RandomReview';
-import CompleteReview from '@/pages/study/CompleteReview';
-import Exam from '@/pages/exam/Exam';
-import MessageCenter from '@/pages/messages/MessageCenter';
-import Marketplace from '@/pages/Marketplace';
+// Lazy Load Protected Pages
+const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
+const Settings = lazy(() => import('@/pages/user/Settings'));
+const WordbookList = lazy(() => import('@/pages/wordbook/WordbookList'));
+const WordbookDetail = lazy(() => import('@/pages/wordbook/WordbookDetail'));
+const StudyNew = lazy(() => import('@/pages/study/StudyNew'));
+const Review = lazy(() => import('@/pages/study/Review'));
+const RandomReview = lazy(() => import('@/pages/study/RandomReview'));
+const CompleteReview = lazy(() => import('@/pages/study/CompleteReview'));
+const Exam = lazy(() => import('@/pages/exam/Exam'));
+const MessageCenter = lazy(() => import('@/pages/messages/MessageCenter'));
+const Marketplace = lazy(() => import('@/pages/Marketplace'));
 
 function App() {
   const { initTheme } = useThemeStore();
@@ -61,7 +62,8 @@ function App() {
         }}
       />
 
-      <Routes>
+      <Suspense fallback={<PageLoading />}>
+        <Routes>
         {/* 级别 0: 无条件访问 */}
         <Route path="/" element={<Home />} />
         <Route path="/url-config" element={<UrlConfig />} />
@@ -97,6 +99,7 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
