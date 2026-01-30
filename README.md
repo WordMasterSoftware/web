@@ -86,3 +86,33 @@ The application communicates with the WordMaster backend (FastAPI). Ensure the b
 - **Styling**: Use Tailwind CSS utility classes. For complex conditional classes, use `clsx` and `tailwind-merge`.
 - **State**: Use `zustand` for global state (e.g., user session, theme) and local state for component-specific logic.
 - **Icons**: Prefer `lucide-react` or `@heroicons/react`.
+
+## 🐳 Docker Deployment
+
+### Quick Start
+
+#### Using Docker Compose (Recommended)
+
+```bash
+# Run in background
+docker-compose up -d --build
+```
+
+#### Manual Docker Build
+
+```bash
+# Build image
+docker build -t wordmaster-web .
+
+# Run container
+docker run -p 3000:3000 wordmaster-web
+```
+
+### Access the Application
+
+The application will be available at http://localhost:3000
+
+### Production Deployment
+
+Use the provided docker-compose.yml file to easily deploy to any Docker-compatible server.
+
