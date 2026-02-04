@@ -49,7 +49,7 @@ const Exam = () => {
     }
   };
 
-  const { timeLeft, formattedTime, stop: stopTimer } = useTimer(exam?.estimated_duration_minutes, onTimerExpire);
+  const { timeLeft } = useTimer(exam?.estimated_duration_minutes, onTimerExpire);
 
   useEffect(() => {
     const fetchExam = async () => {
