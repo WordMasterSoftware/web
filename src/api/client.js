@@ -2,10 +2,28 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 /**
+ * Parse stored state from localStorage
+ * @param {string} key - localStorage key
+ * @returns {object|null} - parsed state or null
+ */
+function getStoredState(key) {
+  const stored = localStorage.getItem(key);
+  if (!stored) return null;
+
+  try {
+    const { state } = JSON.parse(stored);
+    return state;
+  } catch (error) {
+    console.error(`Failed to parse ${key}:`, error);
+    return null;
+  }
+}
+
+/**
  * 创建 Axios 实例
  * 支持动态 baseURL 和自动添加 Authorization header
  */
-const createApiClient = () => {
+function createApiClient() {
   const instance = axios.create({
     timeout: 30000,
     headers: {
@@ -16,37 +34,19 @@ const createApiClient = () => {
   // 请求拦截器
   instance.interceptors.request.use(
     (config) => {
-      // 动态获取 baseURL（从 localStorage）
-      const configStore = localStorage.getItem('config-storage');
-      if (configStore) {
-        try {
-          const { state } = JSON.parse(configStore);
-          if (state?.baseURL) {
-            config.baseURL = state.baseURL;
-          }
-        } catch (error) {
-          console.error('Failed to parse config storage:', error);
-        }
+      const configState = getStoredState('config-storage');
+      if (configState?.baseURL) {
+        config.baseURL = configState.baseURL;
       }
 
-      // 添加 Authorization header
-      const authStore = localStorage.getItem('auth-storage');
-      if (authStore) {
-        try {
-          const { state } = JSON.parse(authStore);
-          if (state?.token) {
-            config.headers.Authorization = `Bearer ${state.token}`;
-          }
-        } catch (error) {
-          console.error('Failed to parse auth storage:', error);
-        }
+      const authState = getStoredState('auth-storage');
+      if (authState?.token) {
+        config.headers.Authorization = `Bearer ${authState.token}`;
       }
 
       return config;
     },
-    (error) => {
-      return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
   );
 
   // 响应拦截器
