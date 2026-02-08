@@ -79,6 +79,10 @@ const createApiClient = () => {
             toast.error('请求的资源不存在');
             break;
 
+          case 429:
+            toast.error('请求过于频繁，请稍后再试');
+            break;
+
           case 500:
             toast.error('服务器错误，请稍后重试');
             break;
